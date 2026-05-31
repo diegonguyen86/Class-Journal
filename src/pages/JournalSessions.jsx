@@ -860,11 +860,8 @@ export default function JournalSessions() {
               <p className="mb-10 whitespace-pre-wrap">{activeSession?.nextPlan || 'Chưa có kế hoạch.'}</p>
 
               <div className="flex justify-center border-t-2 border-dark/20 pt-8 mt-4 bg-white mx-[-32px] px-8 mb-[-32px] pb-8">
-                <button onClick={handleShareImage} disabled={isExporting} className="bg-accent text-white px-8 py-3 rounded-xl font-headline font-bold text-lg memphis-border hover:-translate-y-1 hover:shadow-memphis transition-all flex items-center justify-center gap-3 w-full sm:w-auto disabled:opacity-70 disabled:hover:translate-y-0 disabled:hover:shadow-none">
-                  {isExporting ? (
-                    <span className="material-symbols-outlined text-2xl animate-spin">sync</span>
-                  ) : (
-                    <span className="material-symbols-outlined text-2xl">imagesmode</span>
+                <button onClick={handleShareImage} className="bg-accent text-white px-8 py-3 rounded-xl font-headline font-bold text-lg memphis-border hover:-translate-y-1 hover:shadow-memphis transition-all flex items-center justify-center gap-3 w-full sm:w-auto">
+                  <span className="material-symbols-outlined text-2xl">imagesmode</span>
                   Xem trước và Tạo ảnh báo cáo
                 </button>
               </div>
