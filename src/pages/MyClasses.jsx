@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { collection, getDocs, addDoc, doc, updateDoc } from 'firebase/firestore'
+import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import TopNavBar from '../components/TopNavBar'
 
@@ -335,6 +335,20 @@ export default function MyClasses() {
     }
   }
 
+  const handleDeleteClass = async (classId, e) => {
+    e.stopPropagation()
+    if (window.confirm('Bạn có chắc chắn muốn xoá lớp học này?')) {
+      try {
+        await deleteDoc(doc(db, 'classes', classId))
+        fetchClasses()
+      } catch (error) {
+        console.error("Error deleting class:", error)
+        alert('Có lỗi xảy ra khi xoá lớp học.')
+      }
+    }
+  }
+
+
   useEffect(() => {
     fetchClasses()
   }, [])
@@ -400,9 +414,15 @@ export default function MyClasses() {
                       setEditingClass(cls)
                       setIsAddModalOpen(true)
                     }} 
-                    className="px-4 border-2 border-dark rounded-lg hover:bg-dark hover:text-white transition-colors"
+                    className="px-3 border-2 border-dark rounded-lg hover:bg-dark hover:text-white transition-colors"
                   >
                     <span className="material-symbols-outlined text-xl">edit_note</span>
+                  </button>
+                  <button 
+                    onClick={(e) => handleDeleteClass(cls.id, e)}
+                    className="px-3 border-2 border-dark rounded-lg text-danger hover:bg-danger hover:border-danger hover:text-white transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-xl">delete</span>
                   </button>
                 </div>
               </div>
