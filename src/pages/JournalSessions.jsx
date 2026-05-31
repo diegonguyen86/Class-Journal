@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
-import { collection, getDocs, addDoc, doc, updateDoc } from 'firebase/firestore'
+import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import TopNavBar from '../components/TopNavBar'
+import html2canvas from 'html2canvas'
 
 const initialSkills = [
   { id: 'vocab',   name: 'Từ vựng',       icon: 'Aa',                 color: '#9B88ED', score: 8.5, comment: 'Nắm vững từ vựng cơ bản và từ vựng theo chủ đề. Sử dụng từ vựng phù hợp trong bài.' },
@@ -506,6 +507,23 @@ export default function JournalSessions() {
     }
   }
 
+  const handleDeleteSession = async (e, sessionId) => {
+    e.stopPropagation()
+    if (!window.confirm("Bạn có chắc chắn muốn xoá Session này? Mọi dữ liệu (điểm danh, bài tập, điểm số, nhận xét) sẽ bị mất vĩnh viễn!")) return
+    
+    try {
+      await deleteDoc(doc(db, 'journalSessions', sessionId))
+      const updatedList = sessionsList.filter(s => s.id !== sessionId)
+      setSessionsList(updatedList)
+      if (activeSession?.id === sessionId) {
+        setActiveSession(updatedList.length > 0 ? updatedList[0] : null)
+      }
+    } catch (error) {
+      console.error("Error deleting session: ", error)
+      alert("Không thể xoá Session. Vui lòng kiểm tra quyền Firestore.")
+    }
+  }
+
   const [personalNote, setPersonalNote] = useState('')
 
   useEffect(() => {
@@ -532,28 +550,49 @@ export default function JournalSessions() {
     }
   }
 
-  const handleShareToParent = () => {
+  const [isExporting, setIsExporting] = useState(false)
+
+  const sortedSessions = [...sessionsList].sort((a, b) => new Date(a.date) - new Date(b.date))
+  const sessionIndex = sortedSessions.findIndex(s => s.id === activeSession.id) + 1
+
+  const handleShareImage = async () => {
     if (!activeSession || !activeStudent) return
-    
     const studentData = selectedClass?.studentList?.find(s => s.name === activeStudent)
     const parentPhone = studentData?.phone || ''
     
-    const sortedSessions = [...sessionsList].sort((a, b) => new Date(a.date) - new Date(b.date))
-    const sessionIndex = sortedSessions.findIndex(s => s.id === activeSession.id) + 1
-    
-    const message = `Kính gửi Phụ huynh em ${activeStudent},\nĐây là nhận xét và nội dung buổi học ngày ${activeSession.date}:\n\n📊 THỐNG KÊ HỌC TẬP:\n- Điểm danh: ${studentStats.att}% (${studentStats.attCount}/${studentStats.attTotal}, ${studentStats.lateCount} muộn)\n- Bài tập: ${studentStats.hw}% (${studentStats.hwCompleted} Hoàn thành, ${studentStats.hwPartial} Mới xong 1 phần, ${studentStats.hwIncomplete} Chưa làm)\n- Điểm TB (Buổi học thứ ${sessionIndex}): ${avgGrade}\n\n📌 NHẬN XÉT CÁ NHÂN:\n${personalNote || 'Không có nhận xét riêng.'}\n\n📖 NỘI DUNG BUỔI HỌC:\n${activeSession.content || 'Không có nội dung.'}\n\n🗣 NHẬN XÉT CHUNG CỦA LỚP:\n${activeSession.observation || 'Không có nhận xét chung.'}\n\n📝 KẾ HOẠCH BUỔI SAU:\n${activeSession.nextPlan || 'Không có kế hoạch.'}`
-    
-    if (!parentPhone) {
-      alert("Học sinh này chưa có số điện thoại phụ huynh. Hãy quay lại trang My Classes để thêm số điện thoại nhé!")
-    } else {
-      window.open(`https://zalo.me/${parentPhone}?text=${encodeURIComponent(message)}`, '_blank')
-    }
+    setIsExporting(true)
+    try {
+      const element = document.getElementById('report-card-capture')
+      if (!element) return
 
-    navigator.clipboard.writeText(message).then(() => {
-       if (!parentPhone) alert("Tuy nhiên, nội dung tin nhắn đã được lưu vào Clipboard. Bạn có thể tự gửi cho phụ huynh.")
-    }).catch(err => {
-       console.error("Failed to copy text: ", err)
-    })
+      const canvas = await html2canvas(element, { 
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#F8F4EC'
+      })
+      
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
+      
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `Bao_Cao_${activeStudent}_${activeSession.date}.png`
+      a.click()
+      URL.revokeObjectURL(url)
+
+      if (parentPhone) {
+        alert("Đã tải ảnh báo cáo xuống máy! Hệ thống sẽ mở Zalo ngay bây giờ để bạn kéo thả ảnh vào khung chat.")
+        window.open(`https://zalo.me/${parentPhone}`, '_blank')
+      } else {
+        alert("Đã tải ảnh báo cáo xuống máy! (Lưu ý: Học sinh chưa có số điện thoại phụ huynh nên không tự mở Zalo).")
+      }
+
+    } catch (error) {
+      console.error('Error generating image:', error)
+      alert("Có lỗi xảy ra khi tạo ảnh.")
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   if (loading) return <div className="flex min-h-screen items-center justify-center font-headline text-2xl text-dark">Loading Sessions...</div>
@@ -593,7 +632,10 @@ export default function JournalSessions() {
                 <div key={s.id} onClick={() => setActiveSession(s)} className={`p-4 rounded-xl memphis-border cursor-pointer relative overflow-hidden group transition-all ${activeSession?.id === s.id ? 'bg-secondary shadow-memphis' : 'bg-white hover:shadow-memphis hover:-translate-y-1'}`}>
                   {activeSession?.id === s.id && <div className="absolute -right-4 -top-4 w-12 h-12 bg-white/20 rounded-full rotate-45"></div>}
                   <div className="flex justify-between items-start mb-2 relative z-10">
-                    <h3 className="font-headline font-bold text-dark leading-tight pr-6">{s.title}</h3>
+                    <h3 className="font-headline font-bold text-dark leading-tight pr-2">{s.title}</h3>
+                    <button onClick={(e) => handleDeleteSession(e, s.id)} className="w-6 h-6 rounded-md flex items-center justify-center text-dark/40 hover:text-danger hover:bg-danger/10 transition-colors shrink-0" title="Xoá Session">
+                      <span className="material-symbols-outlined text-[16px]">delete</span>
+                    </button>
                   </div>
                   <div className="flex justify-between items-end mt-4">
                     <div className="font-label text-xs font-semibold text-dark/70 flex items-center gap-1">
@@ -720,8 +762,13 @@ export default function JournalSessions() {
               <p className="mb-10 whitespace-pre-wrap">{activeSession?.nextPlan || 'Chưa có kế hoạch.'}</p>
 
               <div className="flex justify-center border-t-2 border-dark/20 pt-8 mt-4 bg-white mx-[-32px] px-8 mb-[-32px] pb-8">
-                <button onClick={handleShareToParent} className="bg-accent text-white px-8 py-3 rounded-xl font-headline font-bold text-lg memphis-border hover:-translate-y-1 hover:shadow-memphis transition-all flex items-center justify-center gap-3 w-full sm:w-auto">
-                  <span className="material-symbols-outlined text-2xl">share</span> Chia sẻ cho phụ huynh
+                <button onClick={handleShareImage} disabled={isExporting} className="bg-accent text-white px-8 py-3 rounded-xl font-headline font-bold text-lg memphis-border hover:-translate-y-1 hover:shadow-memphis transition-all flex items-center justify-center gap-3 w-full sm:w-auto disabled:opacity-70 disabled:hover:translate-y-0 disabled:hover:shadow-none">
+                  {isExporting ? (
+                    <span className="material-symbols-outlined text-2xl animate-spin">sync</span>
+                  ) : (
+                    <span className="material-symbols-outlined text-2xl">imagesmode</span>
+                  )}
+                  {isExporting ? 'Đang tạo ảnh...' : 'Tạo ảnh chia sẻ phụ huynh'}
                 </button>
               </div>
             </div>
@@ -737,6 +784,81 @@ export default function JournalSessions() {
         savedDetails={activeStudentGradeData?.details}
       />
       <AddSessionModal isOpen={isAddSessionModalOpen} onClose={() => setIsAddSessionModalOpen(false)} onSuccess={fetchData} selectedClass={selectedClass} />
+
+      {/* Hidden Report Card for Export */}
+      <div style={{ position: 'absolute', top: '-9999px', left: '-9999px', pointerEvents: 'none' }}>
+        <div id="report-card-capture" className="bg-[#F8F4EC] p-8 font-body text-dark flex flex-col gap-6" style={{ width: '800px', backgroundImage: 'repeating-linear-gradient(transparent, transparent 31px, #C9B79C 31px, #C9B79C 32px)', lineHeight: '32px' }}>
+          
+          <div className="flex items-center gap-6 bg-white p-6 rounded-2xl border-4 border-dark shadow-[6px_6px_0px_0px_rgba(47,47,47,1)] relative z-10">
+            <div className="w-20 h-20 bg-primary rounded-full border-4 border-dark flex items-center justify-center font-headline font-bold text-3xl text-white shrink-0">
+              {activeStudent?.split(' ').map(n=>n[0]).join('')}
+            </div>
+            <div>
+              <h2 className="font-headline font-extrabold text-4xl text-dark tracking-tight leading-none mb-2">BÁO CÁO HỌC TẬP</h2>
+              <p className="font-headline font-bold text-xl text-primary">{activeStudent} • {selectedClass?.name}</p>
+              <div className="font-label font-bold text-sm text-dark/70 flex items-center gap-1 mt-1">
+                <span className="material-symbols-outlined text-[16px]">calendar_today</span> Ngày: {activeSession?.date}
+              </div>
+            </div>
+            <div className="ml-auto opacity-20 mr-4">
+              <span className="material-symbols-outlined text-7xl">local_library</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-6 relative z-10">
+            <div className="bg-white p-5 rounded-2xl border-4 border-dark shadow-[4px_4px_0px_0px_rgba(47,47,47,1)] flex flex-col items-center justify-center">
+              <div className="font-label font-bold text-dark mb-2 text-center uppercase tracking-wider text-xs">Tỉ lệ điểm danh</div>
+              <div className="font-headline font-extrabold text-4xl text-primary">{studentStats.att}%</div>
+              <div className="font-body font-bold text-dark/70 text-sm mt-1">{studentStats.attCount}/{studentStats.attTotal} ({studentStats.lateCount} muộn)</div>
+            </div>
+            <div className="bg-white p-5 rounded-2xl border-4 border-dark shadow-[4px_4px_0px_0px_rgba(47,47,47,1)] flex flex-col items-center justify-center">
+              <div className="font-label font-bold text-dark mb-2 text-center uppercase tracking-wider text-xs">Bài tập về nhà</div>
+              <div className="font-headline font-extrabold text-4xl text-secondary">{studentStats.hw}%</div>
+              <div className="font-body font-bold text-dark/70 text-xs mt-1 text-center">H: {studentStats.hwCompleted} | P: {studentStats.hwPartial} | C: {studentStats.hwIncomplete}</div>
+            </div>
+            <div className="bg-white p-5 rounded-2xl border-4 border-dark shadow-[4px_4px_0px_0px_rgba(47,47,47,1)] flex flex-col items-center justify-center">
+              <div className="font-label font-bold text-dark mb-2 text-center uppercase tracking-wider text-xs">Điểm TB ({`Buổi ${sessionIndex}`})</div>
+              <div className="flex items-center gap-1 text-accent">
+                <span className="font-headline font-extrabold text-5xl">{avgGrade}</span>
+                <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+              </div>
+            </div>
+          </div>
+
+          {(personalNote || activeSession?.content || activeSession?.observation || activeSession?.nextPlan) && (
+            <div className="bg-white rounded-2xl border-4 border-dark shadow-[6px_6px_0px_0px_rgba(47,47,47,1)] overflow-hidden relative z-10">
+              {personalNote && (
+                <div className="p-6 border-b-4 border-dark bg-secondary/10 relative">
+                  <div className="absolute top-0 left-0 w-2 h-full bg-secondary"></div>
+                  <h3 className="font-headline font-bold text-xl text-dark mb-3 flex items-center gap-2"><span className="material-symbols-outlined text-secondary">edit_note</span> NHẬN XÉT CÁ NHÂN</h3>
+                  <p className="font-body text-base text-dark whitespace-pre-wrap leading-relaxed">{personalNote}</p>
+                </div>
+              )}
+              {activeSession?.content && (
+                <div className="p-6 border-b-4 border-dark bg-white relative">
+                  <div className="absolute top-0 left-0 w-2 h-full bg-primary"></div>
+                  <h3 className="font-headline font-bold text-xl text-dark mb-3 flex items-center gap-2"><span className="material-symbols-outlined text-primary">menu_book</span> NỘI DUNG BUỔI HỌC</h3>
+                  <p className="font-body text-base text-dark whitespace-pre-wrap leading-relaxed">{activeSession?.content}</p>
+                </div>
+              )}
+              {activeSession?.observation && (
+                <div className="p-6 border-b-4 border-dark bg-white relative">
+                  <div className="absolute top-0 left-0 w-2 h-full bg-accent"></div>
+                  <h3 className="font-headline font-bold text-xl text-dark mb-3 flex items-center gap-2"><span className="material-symbols-outlined text-accent">visibility</span> NHẬN XÉT CHUNG TỪ GIÁO VIÊN</h3>
+                  <p className="font-body text-base text-dark whitespace-pre-wrap leading-relaxed">{activeSession?.observation}</p>
+                </div>
+              )}
+              {activeSession?.nextPlan && (
+                <div className="p-6 bg-white relative">
+                  <div className="absolute top-0 left-0 w-2 h-full bg-danger"></div>
+                  <h3 className="font-headline font-bold text-xl text-dark mb-3 flex items-center gap-2"><span className="material-symbols-outlined text-danger">event</span> KẾ HOẠCH BUỔI SAU</h3>
+                  <p className="font-body text-base text-dark whitespace-pre-wrap leading-relaxed">{activeSession?.nextPlan}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
