@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { collection, getDocs } from 'firebase/firestore'
+import { collection, getDocs, addDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import TopNavBar from '../components/TopNavBar'
 
@@ -66,8 +66,15 @@ function ClassModal({ cls, onClose }) {
   )
 }
 
-function AddClassModal({ isOpen, onClose }) {
+function AddClassModal({ isOpen, onClose, onSuccess }) {
   const [students, setStudents] = useState([{ id: 1, name: '', dob: '', parent: '', phone: '' }])
+  const [className, setClassName] = useState('')
+  const [description, setDescription] = useState('')
+  const [schedule, setSchedule] = useState([])
+  const [timeStart, setTimeStart] = useState('18:00')
+  const [timeEnd, setTimeEnd] = useState('19:30')
+  const [room, setRoom] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const addStudentRow = () => {
     setStudents([...students, { id: Date.now(), name: '', dob: '', parent: '', phone: '' }])
@@ -76,6 +83,56 @@ function AddClassModal({ isOpen, onClose }) {
   const removeStudentRow = (id) => {
     if (students.length > 1) {
       setStudents(students.filter(s => s.id !== id))
+    }
+  }
+
+  const handleStudentChange = (id, field, value) => {
+    setStudents(students.map(s => s.id === id ? { ...s, [field]: value } : s))
+  }
+
+  const handleScheduleChange = (day) => {
+    setSchedule(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day])
+  }
+
+  const handleSubmit = async () => {
+    if (!className) return alert('Class Name is required')
+    if (schedule.length === 0) return alert('Please select at least one day')
+    
+    setIsSubmitting(true)
+    try {
+      const newClass = {
+        name: className,
+        description,
+        days: schedule.join('/'),
+        time: `${timeStart}–${timeEnd}`,
+        room,
+        students: students.length,
+        studentList: students.filter(s => s.name.trim() !== ''),
+        attendance: 100,
+        color: '#D96C75', // Default color
+        icon: 'book',     // Default icon
+        teacher: 'Ms. Sarah Chen', // Default teacher
+        createdAt: new Date().toISOString()
+      }
+      
+      await addDoc(collection(db, 'classes'), newClass)
+      
+      // Reset form
+      setClassName('')
+      setDescription('')
+      setSchedule([])
+      setTimeStart('18:00')
+      setTimeEnd('19:30')
+      setRoom('')
+      setStudents([{ id: 1, name: '', dob: '', parent: '', phone: '' }])
+      
+      if (onSuccess) onSuccess()
+      onClose()
+    } catch (error) {
+      console.error("Error adding class: ", error)
+      alert("Failed to add class. Please try again.")
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -97,11 +154,11 @@ function AddClassModal({ isOpen, onClose }) {
             <h3 className="font-headline font-bold text-lg border-b-2 border-dark pb-2 mb-4">Class Information</h3>
             <div>
               <label className="font-label font-bold text-sm text-dark">Class Name *</label>
-              <input type="text" placeholder="e.g. IELTS Foundation" className="w-full bg-secondary/20 border-2 border-dark rounded-lg p-2 mt-1 focus:outline-none focus:border-primary shadow-memphis-sm placeholder:text-dark/40" />
+              <input type="text" value={className} onChange={(e) => setClassName(e.target.value)} placeholder="e.g. IELTS Foundation" className="w-full bg-secondary/20 border-2 border-dark rounded-lg p-2 mt-1 focus:outline-none focus:border-primary shadow-memphis-sm placeholder:text-dark/40" />
             </div>
             <div>
               <label className="font-label font-bold text-sm text-dark">Description (Optional)</label>
-              <textarea placeholder="Brief description of the class..." className="w-full bg-secondary/20 border-2 border-dark rounded-lg p-2 mt-1 focus:outline-none focus:border-primary resize-none h-20 shadow-memphis-sm placeholder:text-dark/40" />
+              <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Brief description of the class..." className="w-full bg-secondary/20 border-2 border-dark rounded-lg p-2 mt-1 focus:outline-none focus:border-primary resize-none h-20 shadow-memphis-sm placeholder:text-dark/40" />
             </div>
             
             <div>
@@ -109,7 +166,7 @@ function AddClassModal({ isOpen, onClose }) {
               <div className="flex flex-wrap gap-3 mt-1">
                 {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map(day => (
                   <label key={day} className="flex items-center gap-1.5 cursor-pointer group">
-                    <input type="checkbox" className="appearance-none w-4 h-4 rounded-sm border-2 border-dark bg-white checked:bg-primary checked:border-primary flex-shrink-0 cursor-pointer shadow-[1px_1px_0px_0px_#2F2F2F] relative checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-[10px] checked:after:font-bold checked:after:left-[2px] checked:after:-top-[1px]" />
+                    <input type="checkbox" checked={schedule.includes(day)} onChange={() => handleScheduleChange(day)} className="appearance-none w-4 h-4 rounded-sm border-2 border-dark bg-white checked:bg-primary checked:border-primary flex-shrink-0 cursor-pointer shadow-[1px_1px_0px_0px_#2F2F2F] relative checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-[10px] checked:after:font-bold checked:after:left-[2px] checked:after:-top-[1px]" />
                     <span className="font-label font-bold text-xs">{day}</span>
                   </label>
                 ))}
@@ -121,17 +178,17 @@ function AddClassModal({ isOpen, onClose }) {
                 <label className="font-label font-bold text-sm text-dark">Time *</label>
                 <div className="flex items-center gap-2 mt-1">
                   <div className="relative flex-1">
-                    <input type="time" className="w-full bg-secondary/20 border-2 border-dark rounded-lg p-2 focus:outline-none focus:border-primary text-xs shadow-memphis-sm" defaultValue="18:00" />
+                    <input type="time" value={timeStart} onChange={(e) => setTimeStart(e.target.value)} className="w-full bg-secondary/20 border-2 border-dark rounded-lg p-2 focus:outline-none focus:border-primary text-xs shadow-memphis-sm" />
                   </div>
                   <span>-</span>
                   <div className="relative flex-1">
-                    <input type="time" className="w-full bg-secondary/20 border-2 border-dark rounded-lg p-2 focus:outline-none focus:border-primary text-xs shadow-memphis-sm" defaultValue="19:30" />
+                    <input type="time" value={timeEnd} onChange={(e) => setTimeEnd(e.target.value)} className="w-full bg-secondary/20 border-2 border-dark rounded-lg p-2 focus:outline-none focus:border-primary text-xs shadow-memphis-sm" />
                   </div>
                 </div>
               </div>
               <div>
                 <label className="font-label font-bold text-sm text-dark">Room Number (Optional)</label>
-                <input type="text" placeholder="e.g. Room 101" className="w-full bg-secondary/20 border-2 border-dark rounded-lg p-2 mt-1 focus:outline-none focus:border-primary shadow-memphis-sm placeholder:text-dark/40" />
+                <input type="text" value={room} onChange={(e) => setRoom(e.target.value)} placeholder="e.g. Room 101" className="w-full bg-secondary/20 border-2 border-dark rounded-lg p-2 mt-1 focus:outline-none focus:border-primary shadow-memphis-sm placeholder:text-dark/40" />
               </div>
             </div>
           </div>
@@ -161,19 +218,19 @@ function AddClassModal({ isOpen, onClose }) {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="font-label font-bold text-xs text-dark/70">Student Name</label>
-                      <input type="text" placeholder="Full name" className="w-full bg-white border-2 border-dark/20 rounded-md p-1.5 mt-1 focus:border-primary focus:outline-none text-xs shadow-[1px_1px_0px_0px_rgba(47,47,47,0.1)]" />
+                      <input type="text" value={stu.name} onChange={(e) => handleStudentChange(stu.id, 'name', e.target.value)} placeholder="Full name" className="w-full bg-white border-2 border-dark/20 rounded-md p-1.5 mt-1 focus:border-primary focus:outline-none text-xs shadow-[1px_1px_0px_0px_rgba(47,47,47,0.1)]" />
                     </div>
                     <div>
                       <label className="font-label font-bold text-xs text-dark/70">Date of Birth</label>
-                      <input type="date" className="w-full bg-white border-2 border-dark/20 rounded-md p-1.5 mt-1 focus:border-primary focus:outline-none text-xs shadow-[1px_1px_0px_0px_rgba(47,47,47,0.1)]" />
+                      <input type="date" value={stu.dob} onChange={(e) => handleStudentChange(stu.id, 'dob', e.target.value)} className="w-full bg-white border-2 border-dark/20 rounded-md p-1.5 mt-1 focus:border-primary focus:outline-none text-xs shadow-[1px_1px_0px_0px_rgba(47,47,47,0.1)]" />
                     </div>
                     <div>
                       <label className="font-label font-bold text-xs text-dark/70">Parent Name</label>
-                      <input type="text" placeholder="Parent full name" className="w-full bg-white border-2 border-dark/20 rounded-md p-1.5 mt-1 focus:border-primary focus:outline-none text-xs shadow-[1px_1px_0px_0px_rgba(47,47,47,0.1)]" />
+                      <input type="text" value={stu.parent} onChange={(e) => handleStudentChange(stu.id, 'parent', e.target.value)} placeholder="Parent full name" className="w-full bg-white border-2 border-dark/20 rounded-md p-1.5 mt-1 focus:border-primary focus:outline-none text-xs shadow-[1px_1px_0px_0px_rgba(47,47,47,0.1)]" />
                     </div>
                     <div>
                       <label className="font-label font-bold text-xs text-dark/70">Contact Phone</label>
-                      <input type="tel" placeholder="Phone number" className="w-full bg-white border-2 border-dark/20 rounded-md p-1.5 mt-1 focus:border-primary focus:outline-none text-xs shadow-[1px_1px_0px_0px_rgba(47,47,47,0.1)]" />
+                      <input type="tel" value={stu.phone} onChange={(e) => handleStudentChange(stu.id, 'phone', e.target.value)} placeholder="Phone number" className="w-full bg-white border-2 border-dark/20 rounded-md p-1.5 mt-1 focus:border-primary focus:outline-none text-xs shadow-[1px_1px_0px_0px_rgba(47,47,47,0.1)]" />
                     </div>
                   </div>
                 </div>
@@ -183,9 +240,9 @@ function AddClassModal({ isOpen, onClose }) {
         </div>
 
         <div className="p-4 border-t-2 border-dark bg-secondary/30 flex justify-end gap-3">
-          <button onClick={onClose} className="px-5 py-2 font-label font-bold text-dark/70 hover:bg-white rounded-lg border-2 border-transparent transition-colors">Cancel</button>
-          <button onClick={onClose} className="px-6 py-2 font-label font-bold text-white bg-primary border-2 border-dark rounded-lg shadow-memphis hover:-translate-y-px transition-transform flex items-center gap-2">
-            <span className="material-symbols-outlined text-sm">save</span> Create Class
+          <button onClick={onClose} disabled={isSubmitting} className="px-5 py-2 font-label font-bold text-dark/70 hover:bg-white rounded-lg border-2 border-transparent transition-colors">Cancel</button>
+          <button onClick={handleSubmit} disabled={isSubmitting} className={`px-6 py-2 font-label font-bold text-white bg-primary border-2 border-dark rounded-lg shadow-memphis hover:-translate-y-px transition-transform flex items-center gap-2 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}>
+            <span className="material-symbols-outlined text-sm">{isSubmitting ? 'hourglass_empty' : 'save'}</span> {isSubmitting ? 'Creating...' : 'Create Class'}
           </button>
         </div>
       </div>
@@ -199,32 +256,33 @@ export default function MyClasses() {
   const [classesList, setClassesList] = useState([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const fetchClasses = async () => {
-      try {
-        const classesSnapshot = await getDocs(collection(db, 'classes'))
-        const classesData = classesSnapshot.docs.map(doc => doc.data())
-        if (classesData.length > 0) {
-          setClassesList(classesData)
-        } else {
-          const sampleStudents = [
-            { id: 1, name: 'Nguyễn An', dob: '15/05/2012', parent: 'Nguyễn Văn A', phone: '0901234567' },
-            { id: 2, name: 'Lê Bình', dob: '22/08/2012', parent: 'Lê Thị B', phone: '0987654321' },
-            { id: 3, name: 'Trần Chi', dob: '10/11/2012', parent: 'Trần Văn C', phone: '0912345678' },
-          ]
-          setClassesList([
-            { id: 1, name: 'IELTS Intensive',    teacher: 'Ms. Sarah Chen', students: 28, days: 'Mon/Wed/Fri', time: '09:00–10:30', room: 'Room 204', attendance: 94, color: '#71816D', icon: 'record_voice_over', studentList: sampleStudents },
-            { id: 2, name: 'English 9B',         teacher: 'Ms. Sarah Chen', students: 24, days: 'Tue/Thu',     time: '11:00–12:30', room: 'Room 108', attendance: 98, color: '#C9B79C', icon: 'book', studentList: sampleStudents },
-            { id: 3, name: 'TOEIC Foundation',   teacher: 'Ms. Sarah Chen', students: 30, days: 'Mon/Wed/Fri', time: '13:30–15:00', room: 'Lab 3',    attendance: 88, color: '#E27D60', icon: 'headphones', studentList: sampleStudents },
-            { id: 4, name: 'Communication Eng',  teacher: 'Ms. Sarah Chen', students: 22, days: 'Tue/Thu',     time: '14:00–15:30', room: 'Room 301', attendance: 91, color: '#D96C75', icon: 'forum', studentList: sampleStudents },
-          ])
-        }
-      } catch (error) {
-        console.error("Error fetching classes:", error)
-      } finally {
-        setLoading(false)
+  const fetchClasses = async () => {
+    try {
+      const classesSnapshot = await getDocs(collection(db, 'classes'))
+      const classesData = classesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      if (classesData.length > 0) {
+        setClassesList(classesData)
+      } else {
+        const sampleStudents = [
+          { id: 1, name: 'Nguyễn An', dob: '15/05/2012', parent: 'Nguyễn Văn A', phone: '0901234567' },
+          { id: 2, name: 'Lê Bình', dob: '22/08/2012', parent: 'Lê Thị B', phone: '0987654321' },
+          { id: 3, name: 'Trần Chi', dob: '10/11/2012', parent: 'Trần Văn C', phone: '0912345678' },
+        ]
+        setClassesList([
+          { id: 1, name: 'IELTS Intensive',    teacher: 'Ms. Sarah Chen', students: 28, days: 'Mon/Wed/Fri', time: '09:00–10:30', room: 'Room 204', attendance: 94, color: '#71816D', icon: 'record_voice_over', studentList: sampleStudents },
+          { id: 2, name: 'English 9B',         teacher: 'Ms. Sarah Chen', students: 24, days: 'Tue/Thu',     time: '11:00–12:30', room: 'Room 108', attendance: 98, color: '#C9B79C', icon: 'book', studentList: sampleStudents },
+          { id: 3, name: 'TOEIC Foundation',   teacher: 'Ms. Sarah Chen', students: 30, days: 'Mon/Wed/Fri', time: '13:30–15:00', room: 'Lab 3',    attendance: 88, color: '#E27D60', icon: 'headphones', studentList: sampleStudents },
+          { id: 4, name: 'Communication Eng',  teacher: 'Ms. Sarah Chen', students: 22, days: 'Tue/Thu',     time: '14:00–15:30', room: 'Room 301', attendance: 91, color: '#D96C75', icon: 'forum', studentList: sampleStudents },
+        ])
       }
+    } catch (error) {
+      console.error("Error fetching classes:", error)
+    } finally {
+      setLoading(false)
     }
+  }
+
+  useEffect(() => {
     fetchClasses()
   }, [])
 
@@ -293,7 +351,7 @@ export default function MyClasses() {
       </main>
 
       <ClassModal cls={activeClass} onClose={() => setActiveClass(null)} />
-      <AddClassModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
+      <AddClassModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onSuccess={fetchClasses} />
     </div>
   )
 }

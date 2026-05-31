@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { collection, getDocs } from 'firebase/firestore'
+import { collection, getDocs, addDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import TopNavBar from '../components/TopNavBar'
 
@@ -128,7 +128,60 @@ function GradeModal({ isOpen, onClose, studentName }) {
   )
 }
 
-function AddSessionModal({ isOpen, onClose }) {
+function AddSessionModal({ isOpen, onClose, onSuccess }) {
+  const [sessionTitle, setSessionTitle] = useState('')
+  const [dateTime, setDateTime] = useState('')
+  const [attendance, setAttendance] = useState({ 'Nguyễn Văn A': 'present', 'Trần Thị B': 'present' })
+  const [homework, setHomework] = useState({ 'Nguyễn Văn A': 'completed' })
+  const [content, setContent] = useState('')
+  const [observation, setObservation] = useState('')
+  const [nextPlan, setNextPlan] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const handleAttendanceChange = (student, value) => {
+    setAttendance(prev => ({ ...prev, [student]: value }))
+  }
+
+  const handleHomeworkChange = (student, value) => {
+    setHomework(prev => ({ ...prev, [student]: value }))
+  }
+
+  const handleSubmit = async () => {
+    if (!sessionTitle) return alert('Session Title is required')
+    if (!dateTime) return alert('Date & Time is required')
+    
+    setIsSubmitting(true)
+    try {
+      const newSession = {
+        title: sessionTitle,
+        date: dateTime.replace('T', ' '),
+        attendance,
+        homework,
+        content,
+        observation,
+        nextPlan,
+        createdAt: new Date().toISOString()
+      }
+      
+      await addDoc(collection(db, 'journalSessions'), newSession)
+      
+      // Reset form
+      setSessionTitle('')
+      setDateTime('')
+      setContent('')
+      setObservation('')
+      setNextPlan('')
+      
+      if (onSuccess) onSuccess()
+      onClose()
+    } catch (error) {
+      console.error("Error adding session: ", error)
+      alert("Failed to add session. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   if (!isOpen) return null
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto backdrop-blur-sm">
@@ -166,12 +219,12 @@ function AddSessionModal({ isOpen, onClose }) {
           <div className="grid grid-cols-1 gap-6 relative z-10">
             <div className="space-y-2">
               <label className="block font-label font-bold text-dark text-sm uppercase tracking-wider">Session Title</label>
-              <input type="text" placeholder="e.g. Lesson 9: Advanced Algebra" className="w-full bg-white border-[2px] border-dark rounded-lg p-3 focus:outline-none focus:ring-0 focus:border-primary shadow-[2px_2px_0px_0px_rgba(47,47,47,0.2)] transition-shadow font-body text-dark placeholder:text-dark/40" />
+              <input type="text" value={sessionTitle} onChange={(e) => setSessionTitle(e.target.value)} placeholder="e.g. Lesson 9: Advanced Algebra" className="w-full bg-white border-[2px] border-dark rounded-lg p-3 focus:outline-none focus:ring-0 focus:border-primary shadow-[2px_2px_0px_0px_rgba(47,47,47,0.2)] transition-shadow font-body text-dark placeholder:text-dark/40" />
             </div>
             <div className="space-y-2">
               <label className="block font-label font-bold text-dark text-sm uppercase tracking-wider">Date & Time</label>
               <div className="relative">
-                <input type="datetime-local" className="w-full bg-white border-[2px] border-dark rounded-lg p-3 pl-10 focus:outline-none focus:ring-0 focus:border-primary shadow-[2px_2px_0px_0px_rgba(47,47,47,0.2)] font-body text-dark" />
+                <input type="datetime-local" value={dateTime} onChange={(e) => setDateTime(e.target.value)} className="w-full bg-white border-[2px] border-dark rounded-lg p-3 pl-10 focus:outline-none focus:ring-0 focus:border-primary shadow-[2px_2px_0px_0px_rgba(47,47,47,0.2)] font-body text-dark" />
                 <span className="material-symbols-outlined absolute left-3 top-3.5 text-dark/60 pointer-events-none">calendar_today</span>
               </div>
             </div>
@@ -204,17 +257,17 @@ function AddSessionModal({ isOpen, onClose }) {
                   <tbody className="divide-y-2 divide-dark/10">
                     <tr className="hover:bg-primary/5 transition-colors">
                       <td className="p-3 font-medium">Nguyễn Văn A</td>
-                      <td className="p-3 text-center"><input type="radio" name="att_1" value="present" defaultChecked className="w-5 h-5 text-primary border-2 border-dark focus:ring-primary focus:ring-offset-1" /></td>
-                      <td className="p-3 text-center"><input type="radio" name="att_1" value="late" className="w-5 h-5 text-accent border-2 border-dark focus:ring-accent" /></td>
-                      <td className="p-3 text-center"><input type="radio" name="att_1" value="absent" className="w-5 h-5 text-danger border-2 border-dark focus:ring-danger" /></td>
-                      <td className="p-3 text-center"><input type="radio" name="att_1" value="excused" className="w-5 h-5 text-secondary border-2 border-dark focus:ring-secondary" /></td>
+                      <td className="p-3 text-center"><input type="radio" name="att_1" value="present" checked={attendance['Nguyễn Văn A'] === 'present'} onChange={(e) => handleAttendanceChange('Nguyễn Văn A', e.target.value)} className="w-5 h-5 text-primary border-2 border-dark focus:ring-primary focus:ring-offset-1" /></td>
+                      <td className="p-3 text-center"><input type="radio" name="att_1" value="late" checked={attendance['Nguyễn Văn A'] === 'late'} onChange={(e) => handleAttendanceChange('Nguyễn Văn A', e.target.value)} className="w-5 h-5 text-accent border-2 border-dark focus:ring-accent" /></td>
+                      <td className="p-3 text-center"><input type="radio" name="att_1" value="absent" checked={attendance['Nguyễn Văn A'] === 'absent'} onChange={(e) => handleAttendanceChange('Nguyễn Văn A', e.target.value)} className="w-5 h-5 text-danger border-2 border-dark focus:ring-danger" /></td>
+                      <td className="p-3 text-center"><input type="radio" name="att_1" value="excused" checked={attendance['Nguyễn Văn A'] === 'excused'} onChange={(e) => handleAttendanceChange('Nguyễn Văn A', e.target.value)} className="w-5 h-5 text-secondary border-2 border-dark focus:ring-secondary" /></td>
                     </tr>
                     <tr className="hover:bg-primary/5 transition-colors">
                       <td className="p-3 font-medium">Trần Thị B</td>
-                      <td className="p-3 text-center"><input type="radio" name="att_2" value="present" defaultChecked className="w-5 h-5 text-primary border-2 border-dark focus:ring-primary" /></td>
-                      <td className="p-3 text-center"><input type="radio" name="att_2" value="late" className="w-5 h-5 text-accent border-2 border-dark focus:ring-accent" /></td>
-                      <td className="p-3 text-center"><input type="radio" name="att_2" value="absent" className="w-5 h-5 text-danger border-2 border-dark focus:ring-danger" /></td>
-                      <td className="p-3 text-center"><input type="radio" name="att_2" value="excused" className="w-5 h-5 text-secondary border-2 border-dark focus:ring-secondary" /></td>
+                      <td className="p-3 text-center"><input type="radio" name="att_2" value="present" checked={attendance['Trần Thị B'] === 'present'} onChange={(e) => handleAttendanceChange('Trần Thị B', e.target.value)} className="w-5 h-5 text-primary border-2 border-dark focus:ring-primary" /></td>
+                      <td className="p-3 text-center"><input type="radio" name="att_2" value="late" checked={attendance['Trần Thị B'] === 'late'} onChange={(e) => handleAttendanceChange('Trần Thị B', e.target.value)} className="w-5 h-5 text-accent border-2 border-dark focus:ring-accent" /></td>
+                      <td className="p-3 text-center"><input type="radio" name="att_2" value="absent" checked={attendance['Trần Thị B'] === 'absent'} onChange={(e) => handleAttendanceChange('Trần Thị B', e.target.value)} className="w-5 h-5 text-danger border-2 border-dark focus:ring-danger" /></td>
+                      <td className="p-3 text-center"><input type="radio" name="att_2" value="excused" checked={attendance['Trần Thị B'] === 'excused'} onChange={(e) => handleAttendanceChange('Trần Thị B', e.target.value)} className="w-5 h-5 text-secondary border-2 border-dark focus:ring-secondary" /></td>
                     </tr>
                   </tbody>
                 </table>
@@ -239,9 +292,9 @@ function AddSessionModal({ isOpen, onClose }) {
                   <tbody className="divide-y-2 divide-dark/10">
                     <tr className="hover:bg-primary/5 transition-colors">
                       <td className="p-3 font-medium">Nguyễn Văn A</td>
-                      <td className="p-3 text-center"><input type="radio" name="hw_1" value="completed" defaultChecked className="w-5 h-5 text-primary border-2 border-dark focus:ring-primary" /></td>
-                      <td className="p-3 text-center"><input type="radio" name="hw_1" value="partial" className="w-5 h-5 text-accent border-2 border-dark focus:ring-accent" /></td>
-                      <td className="p-3 text-center"><input type="radio" name="hw_1" value="incomplete" className="w-5 h-5 text-danger border-2 border-dark focus:ring-danger" /></td>
+                      <td className="p-3 text-center"><input type="radio" name="hw_1" value="completed" checked={homework['Nguyễn Văn A'] === 'completed'} onChange={(e) => handleHomeworkChange('Nguyễn Văn A', e.target.value)} className="w-5 h-5 text-primary border-2 border-dark focus:ring-primary" /></td>
+                      <td className="p-3 text-center"><input type="radio" name="hw_1" value="partial" checked={homework['Nguyễn Văn A'] === 'partial'} onChange={(e) => handleHomeworkChange('Nguyễn Văn A', e.target.value)} className="w-5 h-5 text-accent border-2 border-dark focus:ring-accent" /></td>
+                      <td className="p-3 text-center"><input type="radio" name="hw_1" value="incomplete" checked={homework['Nguyễn Văn A'] === 'incomplete'} onChange={(e) => handleHomeworkChange('Nguyễn Văn A', e.target.value)} className="w-5 h-5 text-danger border-2 border-dark focus:ring-danger" /></td>
                     </tr>
                   </tbody>
                 </table>
@@ -259,31 +312,31 @@ function AddSessionModal({ isOpen, onClose }) {
                   <span className="material-symbols-outlined text-[18px] cursor-pointer hover:text-dark">format_list_bulleted</span>
                 </div>
               </label>
-              <textarea className="w-full bg-white border-[2px] border-dark rounded-lg p-3 focus:outline-none focus:ring-0 focus:border-primary font-body text-dark resize-y min-h-[100px]" placeholder="What was covered today? Topics, exercises, materials used..." rows="4"></textarea>
+              <textarea value={content} onChange={(e) => setContent(e.target.value)} className="w-full bg-white border-[2px] border-dark rounded-lg p-3 focus:outline-none focus:ring-0 focus:border-primary font-body text-dark resize-y min-h-[100px]" placeholder="What was covered today? Topics, exercises, materials used..." rows="4"></textarea>
             </div>
 
             {/* 5. General Observation */}
             <div className="space-y-2 bg-white/50 p-4 rounded-xl border-2 border-dark/20">
               <label className="block font-label font-bold text-dark text-sm uppercase tracking-wider">Nhận xét chung của buổi học</label>
-              <textarea className="w-full bg-white border-[2px] border-dark rounded-lg p-3 focus:outline-none focus:ring-0 focus:border-primary font-body text-dark resize-y min-h-[100px]" placeholder="How did the class respond? Notable student interactions, struggles, or successes..." rows="4"></textarea>
+              <textarea value={observation} onChange={(e) => setObservation(e.target.value)} className="w-full bg-white border-[2px] border-dark rounded-lg p-3 focus:outline-none focus:ring-0 focus:border-primary font-body text-dark resize-y min-h-[100px]" placeholder="How did the class respond? Notable student interactions, struggles, or successes..." rows="4"></textarea>
             </div>
 
             {/* 6. Next Lesson Plan */}
             <div className="space-y-2 bg-white/50 p-4 rounded-xl border-2 border-dark/20">
               <label className="block font-label font-bold text-dark text-sm uppercase tracking-wider">Bài học buổi sau</label>
-              <textarea className="w-full bg-white border-[2px] border-dark rounded-lg p-3 focus:outline-none focus:ring-0 focus:border-primary font-body text-dark resize-y min-h-[80px]" placeholder="Brief outline or goals for the next session..." rows="2"></textarea>
+              <textarea value={nextPlan} onChange={(e) => setNextPlan(e.target.value)} className="w-full bg-white border-[2px] border-dark rounded-lg p-3 focus:outline-none focus:ring-0 focus:border-primary font-body text-dark resize-y min-h-[80px]" placeholder="Brief outline or goals for the next session..." rows="2"></textarea>
             </div>
           </div>
         </div>
 
         {/* Modal Footer */}
         <div className="p-6 border-t-[3px] border-dark bg-white/80 flex flex-col-reverse sm:flex-row justify-end items-center gap-4 shrink-0">
-          <button onClick={onClose} className="w-full sm:w-auto px-6 py-3 rounded-lg border-[2px] border-dark bg-secondary text-dark font-headline font-bold shadow-memphis-sm hover:bg-secondary/80 hover:-translate-y-px hover:shadow-none transition-all">
+          <button onClick={onClose} disabled={isSubmitting} className="w-full sm:w-auto px-6 py-3 rounded-lg border-[2px] border-dark bg-secondary text-dark font-headline font-bold shadow-memphis-sm hover:bg-secondary/80 hover:-translate-y-px hover:shadow-none transition-all">
             Cancel
           </button>
-          <button onClick={onClose} className="w-full sm:w-auto px-8 py-3 rounded-lg border-[3px] border-dark bg-primary text-white font-headline font-bold text-lg shadow-memphis hover:bg-primary/90 active:translate-y-[4px] active:shadow-none transition-all flex items-center justify-center gap-2 group">
-            Create Session
-            <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+          <button onClick={handleSubmit} disabled={isSubmitting} className={`w-full sm:w-auto px-8 py-3 rounded-lg border-[3px] border-dark bg-primary text-white font-headline font-bold text-lg shadow-memphis hover:bg-primary/90 active:translate-y-[4px] active:shadow-none transition-all flex items-center justify-center gap-2 group ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}>
+            {isSubmitting ? 'Creating...' : 'Create Session'}
+            <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">{isSubmitting ? 'hourglass_empty' : 'arrow_forward'}</span>
           </button>
         </div>
       </div>
@@ -298,29 +351,30 @@ export default function JournalSessions() {
   const [sessionsList, setSessionsList] = useState([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const fetchSessions = async () => {
-      try {
-        const sessionsSnapshot = await getDocs(collection(db, 'journalSessions'))
-        const sessionsData = sessionsSnapshot.docs.map(doc => doc.data())
-        if (sessionsData.length > 0) {
-          setSessionsList(sessionsData)
-        } else {
-          setSessionsList([
-            { id: 1, title: 'Session 1: Present Simple & Continuous', date: 'May 29', active: true },
-            { id: 2, title: 'Session 2: Vocabulary - Family & Friends', date: 'May 28' },
-            { id: 3, title: 'Session 3: Listening - Short Conversations', date: 'May 27' },
-            { id: 4, title: 'Session 4: Past Simple vs Present Perfect', date: 'May 26' },
-            { id: 5, title: 'Session 5: Speaking - Describing People', date: 'May 25' },
-            { id: 6, title: 'Session 6: Reading - True/False/Not Given', date: 'May 24' },
-          ])
-        }
-      } catch (error) {
-        console.error("Error fetching sessions:", error)
-      } finally {
-        setLoading(false)
+  const fetchSessions = async () => {
+    try {
+      const sessionsSnapshot = await getDocs(collection(db, 'journalSessions'))
+      const sessionsData = sessionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      if (sessionsData.length > 0) {
+        setSessionsList(sessionsData)
+      } else {
+        setSessionsList([
+          { id: 1, title: 'Session 1: Present Simple & Continuous', date: 'May 29', active: true },
+          { id: 2, title: 'Session 2: Vocabulary - Family & Friends', date: 'May 28' },
+          { id: 3, title: 'Session 3: Listening - Short Conversations', date: 'May 27' },
+          { id: 4, title: 'Session 4: Past Simple vs Present Perfect', date: 'May 26' },
+          { id: 5, title: 'Session 5: Speaking - Describing People', date: 'May 25' },
+          { id: 6, title: 'Session 6: Reading - True/False/Not Given', date: 'May 24' },
+        ])
       }
+    } catch (error) {
+      console.error("Error fetching sessions:", error)
+    } finally {
+      setLoading(false)
     }
+  }
+
+  useEffect(() => {
     fetchSessions()
   }, [])
 
@@ -458,7 +512,7 @@ export default function JournalSessions() {
         onClose={() => setIsGradeModalOpen(false)} 
         studentName={activeStudent}
       />
-      <AddSessionModal isOpen={isAddSessionModalOpen} onClose={() => setIsAddSessionModalOpen(false)} />
+      <AddSessionModal isOpen={isAddSessionModalOpen} onClose={() => setIsAddSessionModalOpen(false)} onSuccess={fetchSessions} />
     </div>
   )
 }
