@@ -1,21 +1,55 @@
+import { useState, useEffect } from 'react'
+import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore'
+import { db } from '../firebase'
 import TopNavBar from '../components/TopNavBar'
 import { Link } from 'react-router-dom'
 
-const stats = [
-  { icon: 'auto_awesome_mosaic', label: 'Total Classes',    value: '12', color: 'text-primary' },
-  { icon: 'library_books',       label: 'Lessons this week',value: '24', color: 'text-secondary' },
-  { icon: 'groups',              label: 'Total Students',   value: '186',color: 'text-accent' },
-  { icon: 'trending_up',         label: 'Avg. Attendance',  value: '94%',color: 'text-primary' },
-]
-
-const recentSessions = [
-  { class: 'IELTS Intensive',    topic: 'Listening - Map Labeling',  date: 'May 29' },
-  { class: 'English 9B',         topic: 'Present Perfect Practice',  date: 'May 29' },
-  { class: 'TOEIC Foundation',   topic: 'Reading - Incomplete Sent', date: 'May 28' },
-  { class: 'Communication Eng',  topic: 'Speaking - Job Interviews', date: 'May 27' },
-]
-
 export default function Dashboard() {
+  const [stats, setStats] = useState([])
+  const [recentSessions, setRecentSessions] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const statsSnapshot = await getDocs(collection(db, 'stats'))
+        const statsData = statsSnapshot.docs.map(doc => doc.data())
+        if (statsData.length > 0) {
+          setStats(statsData)
+        } else {
+          setStats([
+            { icon: 'auto_awesome_mosaic', label: 'Total Classes',    value: '12', color: 'text-primary' },
+            { icon: 'library_books',       label: 'Lessons this week',value: '24', color: 'text-secondary' },
+            { icon: 'groups',              label: 'Total Students',   value: '186',color: 'text-accent' },
+            { icon: 'trending_up',         label: 'Avg. Attendance',  value: '94%',color: 'text-primary' },
+          ])
+        }
+
+        const sessionsQuery = query(collection(db, 'sessions'), orderBy('date', 'desc'), limit(4))
+        const sessionsSnapshot = await getDocs(sessionsQuery)
+        const sessionsData = sessionsSnapshot.docs.map(doc => doc.data())
+        if (sessionsData.length > 0) {
+          setRecentSessions(sessionsData)
+        } else {
+          setRecentSessions([
+            { class: 'IELTS Intensive',    topic: 'Listening - Map Labeling',  date: 'May 29' },
+            { class: 'English 9B',         topic: 'Present Perfect Practice',  date: 'May 29' },
+            { class: 'TOEIC Foundation',   topic: 'Reading - Incomplete Sent', date: 'May 28' },
+            { class: 'Communication Eng',  topic: 'Speaking - Job Interviews', date: 'May 27' },
+          ])
+        }
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchDashboardData()
+  }, [])
+
+  if (loading) return <div className="flex min-h-screen items-center justify-center font-headline text-2xl text-dark">Loading Dashboard...</div>
+
   return (
     <div className="flex flex-col min-h-screen">
       <TopNavBar />

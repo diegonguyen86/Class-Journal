@@ -1,18 +1,5 @@
 import TopNavBar from '../components/TopNavBar'
 
-const pendingStudents = [
-  { id: 1, name: 'Marcus Chen',   class: 'IELTS Intensive',   amount: '$600.00', status: 'Pending', statusColor: 'bg-secondary/30 text-dark border-dark/20', initials: 'MC', initialsColor: 'bg-secondary/20 text-dark/70 border-dark/20' },
-  { id: 2, name: 'Aria Rodriguez',class: 'Communication Eng', amount: '$320.00', status: 'Overdue', statusColor: 'bg-accent/20 text-accent border-accent/30', initials: 'AR', initialsColor: 'bg-accent/20 text-accent border-accent/30' },
-  { id: 3, name: 'Liam Thompson', class: 'English 9B',        amount: '$450.00', status: 'Paid',    statusColor: 'bg-primary/20 text-primary border-primary/30', initials: 'LT', initialsColor: 'bg-primary/20 text-primary border-primary/30' },
-]
-
-const recentPayments = [
-  { id: 1, date: 'May 15, 2026', desc: 'Jane Smith - Tuition Term 2', amount: '+$450.00', method: 'Credit Card' },
-  { id: 2, date: 'May 12, 2026', desc: 'Liam Thompson - Tuition Term 2', amount: '+$450.00', method: 'Bank Transfer' },
-  { id: 3, date: 'May 10, 2026', desc: 'Elena Gilbert - IELTS Materials', amount: '+$75.00', method: 'Cash' },
-  { id: 4, date: 'May 08, 2026', desc: 'Marcus Chen - Partial Payment', amount: '+$200.00', method: 'Credit Card' },
-]
-
 function InvoiceModal({ isOpen, onClose }) {
   const [lineItems, setLineItems] = useState([
     { id: 1, desc: 'Tuition Fee - October', qty: 1, price: 450.00 },
@@ -181,10 +168,54 @@ function InvoiceModal({ isOpen, onClose }) {
   )
 }
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { collection, getDocs } from 'firebase/firestore'
+import { db } from '../firebase'
 
 export default function StudentBilling() {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [pendingStudents, setPendingStudents] = useState([])
+  const [recentPayments, setRecentPayments] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchBillingData = async () => {
+      try {
+        const studentsSnapshot = await getDocs(collection(db, 'pendingStudents'))
+        const studentsData = studentsSnapshot.docs.map(doc => doc.data())
+        if (studentsData.length > 0) {
+          setPendingStudents(studentsData)
+        } else {
+          setPendingStudents([
+            { id: 1, name: 'Marcus Chen',   class: 'IELTS Intensive',   amount: '$600.00', status: 'Pending', statusColor: 'bg-secondary/30 text-dark border-dark/20', initials: 'MC', initialsColor: 'bg-secondary/20 text-dark/70 border-dark/20' },
+            { id: 2, name: 'Aria Rodriguez',class: 'Communication Eng', amount: '$320.00', status: 'Overdue', statusColor: 'bg-accent/20 text-accent border-accent/30', initials: 'AR', initialsColor: 'bg-accent/20 text-accent border-accent/30' },
+            { id: 3, name: 'Liam Thompson', class: 'English 9B',        amount: '$450.00', status: 'Paid',    statusColor: 'bg-primary/20 text-primary border-primary/30', initials: 'LT', initialsColor: 'bg-primary/20 text-primary border-primary/30' },
+          ])
+        }
+
+        const paymentsSnapshot = await getDocs(collection(db, 'recentPayments'))
+        const paymentsData = paymentsSnapshot.docs.map(doc => doc.data())
+        if (paymentsData.length > 0) {
+          setRecentPayments(paymentsData)
+        } else {
+          setRecentPayments([
+            { id: 1, date: 'May 15, 2026', desc: 'Jane Smith - Tuition Term 2', amount: '+$450.00', method: 'Credit Card' },
+            { id: 2, date: 'May 12, 2026', desc: 'Liam Thompson - Tuition Term 2', amount: '+$450.00', method: 'Bank Transfer' },
+            { id: 3, date: 'May 10, 2026', desc: 'Elena Gilbert - IELTS Materials', amount: '+$75.00', method: 'Cash' },
+            { id: 4, date: 'May 08, 2026', desc: 'Marcus Chen - Partial Payment', amount: '+$200.00', method: 'Credit Card' },
+          ])
+        }
+      } catch (error) {
+        console.error("Error fetching billing data:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchBillingData()
+  }, [])
+
+  if (loading) return <div className="flex min-h-screen items-center justify-center font-headline text-2xl text-dark">Loading Billing...</div>
+
   return (
     <div className="flex flex-col min-h-screen">
       <TopNavBar />

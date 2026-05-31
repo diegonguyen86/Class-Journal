@@ -1,18 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { collection, getDocs } from 'firebase/firestore'
+import { db } from '../firebase'
 import TopNavBar from '../components/TopNavBar'
-
-const sampleStudents = [
-  { id: 1, name: 'Nguyễn An', dob: '15/05/2012', parent: 'Nguyễn Văn A', phone: '0901234567' },
-  { id: 2, name: 'Lê Bình', dob: '22/08/2012', parent: 'Lê Thị B', phone: '0987654321' },
-  { id: 3, name: 'Trần Chi', dob: '10/11/2012', parent: 'Trần Văn C', phone: '0912345678' },
-]
-
-const classes = [
-  { id: 1, name: 'IELTS Intensive',    teacher: 'Ms. Sarah Chen', students: 28, days: 'Mon/Wed/Fri', time: '09:00–10:30', room: 'Room 204', attendance: 94, color: '#71816D', icon: 'record_voice_over', studentList: sampleStudents },
-  { id: 2, name: 'English 9B',         teacher: 'Ms. Sarah Chen', students: 24, days: 'Tue/Thu',     time: '11:00–12:30', room: 'Room 108', attendance: 98, color: '#C9B79C', icon: 'book', studentList: sampleStudents },
-  { id: 3, name: 'TOEIC Foundation',   teacher: 'Ms. Sarah Chen', students: 30, days: 'Mon/Wed/Fri', time: '13:30–15:00', room: 'Lab 3',    attendance: 88, color: '#E27D60', icon: 'headphones', studentList: sampleStudents },
-  { id: 4, name: 'Communication Eng',  teacher: 'Ms. Sarah Chen', students: 22, days: 'Tue/Thu',     time: '14:00–15:30', room: 'Room 301', attendance: 91, color: '#D96C75', icon: 'forum', studentList: sampleStudents },
-]
 
 function ClassModal({ cls, onClose }) {
   if (!cls) return null
@@ -207,6 +196,39 @@ function AddClassModal({ isOpen, onClose }) {
 export default function MyClasses() {
   const [activeClass, setActiveClass] = useState(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [classesList, setClassesList] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        const classesSnapshot = await getDocs(collection(db, 'classes'))
+        const classesData = classesSnapshot.docs.map(doc => doc.data())
+        if (classesData.length > 0) {
+          setClassesList(classesData)
+        } else {
+          const sampleStudents = [
+            { id: 1, name: 'Nguyễn An', dob: '15/05/2012', parent: 'Nguyễn Văn A', phone: '0901234567' },
+            { id: 2, name: 'Lê Bình', dob: '22/08/2012', parent: 'Lê Thị B', phone: '0987654321' },
+            { id: 3, name: 'Trần Chi', dob: '10/11/2012', parent: 'Trần Văn C', phone: '0912345678' },
+          ]
+          setClassesList([
+            { id: 1, name: 'IELTS Intensive',    teacher: 'Ms. Sarah Chen', students: 28, days: 'Mon/Wed/Fri', time: '09:00–10:30', room: 'Room 204', attendance: 94, color: '#71816D', icon: 'record_voice_over', studentList: sampleStudents },
+            { id: 2, name: 'English 9B',         teacher: 'Ms. Sarah Chen', students: 24, days: 'Tue/Thu',     time: '11:00–12:30', room: 'Room 108', attendance: 98, color: '#C9B79C', icon: 'book', studentList: sampleStudents },
+            { id: 3, name: 'TOEIC Foundation',   teacher: 'Ms. Sarah Chen', students: 30, days: 'Mon/Wed/Fri', time: '13:30–15:00', room: 'Lab 3',    attendance: 88, color: '#E27D60', icon: 'headphones', studentList: sampleStudents },
+            { id: 4, name: 'Communication Eng',  teacher: 'Ms. Sarah Chen', students: 22, days: 'Tue/Thu',     time: '14:00–15:30', room: 'Room 301', attendance: 91, color: '#D96C75', icon: 'forum', studentList: sampleStudents },
+          ])
+        }
+      } catch (error) {
+        console.error("Error fetching classes:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchClasses()
+  }, [])
+
+  if (loading) return <div className="flex min-h-screen items-center justify-center font-headline text-2xl text-dark">Loading Classes...</div>
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -225,7 +247,7 @@ export default function MyClasses() {
 
         {/* Class Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-          {classes.map((cls) => (
+          {classesList.map((cls) => (
             <div
               key={cls.id}
               className="bg-white rounded-2xl memphis-border shadow-memphis overflow-hidden flex flex-col cursor-pointer hover:-translate-y-1 transition-transform"

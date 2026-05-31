@@ -1,14 +1,7 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { collection, getDocs } from 'firebase/firestore'
+import { db } from '../firebase'
 import TopNavBar from '../components/TopNavBar'
-
-const sessions = [
-  { id: 1, title: 'Session 1: Present Simple & Continuous', date: 'May 29', active: true },
-  { id: 2, title: 'Session 2: Vocabulary - Family & Friends', date: 'May 28' },
-  { id: 3, title: 'Session 3: Listening - Short Conversations', date: 'May 27' },
-  { id: 4, title: 'Session 4: Past Simple vs Present Perfect', date: 'May 26' },
-  { id: 5, title: 'Session 5: Speaking - Describing People', date: 'May 25' },
-  { id: 6, title: 'Session 6: Reading - True/False/Not Given', date: 'May 24' },
-]
 
 const studentsList = ['Nguyễn An', 'Lê Bình', 'Trần Chi', 'Phạm Dũng']
 
@@ -302,6 +295,36 @@ export default function JournalSessions() {
   const [activeStudent, setActiveStudent] = useState(studentsList[0])
   const [isGradeModalOpen, setIsGradeModalOpen] = useState(false)
   const [isAddSessionModalOpen, setIsAddSessionModalOpen] = useState(false)
+  const [sessionsList, setSessionsList] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchSessions = async () => {
+      try {
+        const sessionsSnapshot = await getDocs(collection(db, 'journalSessions'))
+        const sessionsData = sessionsSnapshot.docs.map(doc => doc.data())
+        if (sessionsData.length > 0) {
+          setSessionsList(sessionsData)
+        } else {
+          setSessionsList([
+            { id: 1, title: 'Session 1: Present Simple & Continuous', date: 'May 29', active: true },
+            { id: 2, title: 'Session 2: Vocabulary - Family & Friends', date: 'May 28' },
+            { id: 3, title: 'Session 3: Listening - Short Conversations', date: 'May 27' },
+            { id: 4, title: 'Session 4: Past Simple vs Present Perfect', date: 'May 26' },
+            { id: 5, title: 'Session 5: Speaking - Describing People', date: 'May 25' },
+            { id: 6, title: 'Session 6: Reading - True/False/Not Given', date: 'May 24' },
+          ])
+        }
+      } catch (error) {
+        console.error("Error fetching sessions:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchSessions()
+  }, [])
+
+  if (loading) return <div className="flex min-h-screen items-center justify-center font-headline text-2xl text-dark">Loading Sessions...</div>
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -328,7 +351,7 @@ export default function JournalSessions() {
             </div>
             
             <div className="flex-1 overflow-y-auto pr-2 space-y-3">
-              {sessions.map((s) => (
+              {sessionsList.map((s) => (
                 <div key={s.id} className={`p-4 rounded-xl memphis-border cursor-pointer relative overflow-hidden group transition-all ${s.active ? 'bg-secondary shadow-memphis' : 'bg-white hover:shadow-memphis hover:-translate-y-1'}`}>
                   {s.active && <div className="absolute -right-4 -top-4 w-12 h-12 bg-white/20 rounded-full rotate-45"></div>}
                   <div className="flex justify-between items-start mb-2 relative z-10">
