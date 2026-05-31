@@ -3,8 +3,6 @@ import { collection, getDocs, addDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import TopNavBar from '../components/TopNavBar'
 
-const studentsList = ['Nguyễn An', 'Lê Bình', 'Trần Chi', 'Phạm Dũng']
-
 const initialSkills = [
   { id: 'vocab',   name: 'Từ vựng',       icon: 'Aa',                 color: '#9B88ED', score: 8.5, comment: 'Nắm vững từ vựng cơ bản và từ vựng theo chủ đề. Sử dụng từ vựng phù hợp trong bài.' },
   { id: 'grammar', name: 'Ngữ pháp',      icon: 'menu_book',          color: '#71816D', score: 7.0, comment: 'Hiểu được các cấu trúc ngữ pháp cơ bản. Cần chú ý thêm thì hiện tại hoàn thành.' },
@@ -128,11 +126,20 @@ function GradeModal({ isOpen, onClose, studentName }) {
   )
 }
 
-function AddSessionModal({ isOpen, onClose, onSuccess }) {
+function AddSessionModal({ isOpen, onClose, onSuccess, selectedClass }) {
   const [sessionTitle, setSessionTitle] = useState('')
   const [dateTime, setDateTime] = useState('')
-  const [attendance, setAttendance] = useState({ 'Nguyễn Văn A': 'present', 'Trần Thị B': 'present' })
-  const [homework, setHomework] = useState({ 'Nguyễn Văn A': 'completed' })
+  
+  const [attendance, setAttendance] = useState({})
+  const [homework, setHomework] = useState({})
+  
+  useEffect(() => {
+    if (selectedClass && selectedClass.studentList) {
+      setAttendance(selectedClass.studentList.reduce((acc, student) => ({...acc, [student.name]: 'present'}), {}))
+      setHomework(selectedClass.studentList.reduce((acc, student) => ({...acc, [student.name]: 'completed'}), {}))
+    }
+  }, [selectedClass])
+
   const [content, setContent] = useState('')
   const [observation, setObservation] = useState('')
   const [nextPlan, setNextPlan] = useState('')
@@ -255,20 +262,15 @@ function AddSessionModal({ isOpen, onClose, onSuccess }) {
                     </tr>
                   </thead>
                   <tbody className="divide-y-2 divide-dark/10">
-                    <tr className="hover:bg-primary/5 transition-colors">
-                      <td className="p-3 font-medium">Nguyễn Văn A</td>
-                      <td className="p-3 text-center"><input type="radio" name="att_1" value="present" checked={attendance['Nguyễn Văn A'] === 'present'} onChange={(e) => handleAttendanceChange('Nguyễn Văn A', e.target.value)} className="w-5 h-5 text-primary border-2 border-dark focus:ring-primary focus:ring-offset-1" /></td>
-                      <td className="p-3 text-center"><input type="radio" name="att_1" value="late" checked={attendance['Nguyễn Văn A'] === 'late'} onChange={(e) => handleAttendanceChange('Nguyễn Văn A', e.target.value)} className="w-5 h-5 text-accent border-2 border-dark focus:ring-accent" /></td>
-                      <td className="p-3 text-center"><input type="radio" name="att_1" value="absent" checked={attendance['Nguyễn Văn A'] === 'absent'} onChange={(e) => handleAttendanceChange('Nguyễn Văn A', e.target.value)} className="w-5 h-5 text-danger border-2 border-dark focus:ring-danger" /></td>
-                      <td className="p-3 text-center"><input type="radio" name="att_1" value="excused" checked={attendance['Nguyễn Văn A'] === 'excused'} onChange={(e) => handleAttendanceChange('Nguyễn Văn A', e.target.value)} className="w-5 h-5 text-secondary border-2 border-dark focus:ring-secondary" /></td>
-                    </tr>
-                    <tr className="hover:bg-primary/5 transition-colors">
-                      <td className="p-3 font-medium">Trần Thị B</td>
-                      <td className="p-3 text-center"><input type="radio" name="att_2" value="present" checked={attendance['Trần Thị B'] === 'present'} onChange={(e) => handleAttendanceChange('Trần Thị B', e.target.value)} className="w-5 h-5 text-primary border-2 border-dark focus:ring-primary" /></td>
-                      <td className="p-3 text-center"><input type="radio" name="att_2" value="late" checked={attendance['Trần Thị B'] === 'late'} onChange={(e) => handleAttendanceChange('Trần Thị B', e.target.value)} className="w-5 h-5 text-accent border-2 border-dark focus:ring-accent" /></td>
-                      <td className="p-3 text-center"><input type="radio" name="att_2" value="absent" checked={attendance['Trần Thị B'] === 'absent'} onChange={(e) => handleAttendanceChange('Trần Thị B', e.target.value)} className="w-5 h-5 text-danger border-2 border-dark focus:ring-danger" /></td>
-                      <td className="p-3 text-center"><input type="radio" name="att_2" value="excused" checked={attendance['Trần Thị B'] === 'excused'} onChange={(e) => handleAttendanceChange('Trần Thị B', e.target.value)} className="w-5 h-5 text-secondary border-2 border-dark focus:ring-secondary" /></td>
-                    </tr>
+                    {selectedClass?.studentList?.map((student, idx) => (
+                      <tr key={student.id || idx} className="hover:bg-primary/5 transition-colors">
+                        <td className="p-3 font-medium">{student.name}</td>
+                        <td className="p-3 text-center"><input type="radio" name={`att_${idx}`} value="present" checked={attendance[student.name] === 'present'} onChange={(e) => handleAttendanceChange(student.name, e.target.value)} className="w-5 h-5 text-primary border-2 border-dark focus:ring-primary focus:ring-offset-1" /></td>
+                        <td className="p-3 text-center"><input type="radio" name={`att_${idx}`} value="late" checked={attendance[student.name] === 'late'} onChange={(e) => handleAttendanceChange(student.name, e.target.value)} className="w-5 h-5 text-accent border-2 border-dark focus:ring-accent" /></td>
+                        <td className="p-3 text-center"><input type="radio" name={`att_${idx}`} value="absent" checked={attendance[student.name] === 'absent'} onChange={(e) => handleAttendanceChange(student.name, e.target.value)} className="w-5 h-5 text-danger border-2 border-dark focus:ring-danger" /></td>
+                        <td className="p-3 text-center"><input type="radio" name={`att_${idx}`} value="excused" checked={attendance[student.name] === 'excused'} onChange={(e) => handleAttendanceChange(student.name, e.target.value)} className="w-5 h-5 text-secondary border-2 border-dark focus:ring-secondary" /></td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -290,12 +292,14 @@ function AddSessionModal({ isOpen, onClose, onSuccess }) {
                     </tr>
                   </thead>
                   <tbody className="divide-y-2 divide-dark/10">
-                    <tr className="hover:bg-primary/5 transition-colors">
-                      <td className="p-3 font-medium">Nguyễn Văn A</td>
-                      <td className="p-3 text-center"><input type="radio" name="hw_1" value="completed" checked={homework['Nguyễn Văn A'] === 'completed'} onChange={(e) => handleHomeworkChange('Nguyễn Văn A', e.target.value)} className="w-5 h-5 text-primary border-2 border-dark focus:ring-primary" /></td>
-                      <td className="p-3 text-center"><input type="radio" name="hw_1" value="partial" checked={homework['Nguyễn Văn A'] === 'partial'} onChange={(e) => handleHomeworkChange('Nguyễn Văn A', e.target.value)} className="w-5 h-5 text-accent border-2 border-dark focus:ring-accent" /></td>
-                      <td className="p-3 text-center"><input type="radio" name="hw_1" value="incomplete" checked={homework['Nguyễn Văn A'] === 'incomplete'} onChange={(e) => handleHomeworkChange('Nguyễn Văn A', e.target.value)} className="w-5 h-5 text-danger border-2 border-dark focus:ring-danger" /></td>
-                    </tr>
+                    {selectedClass?.studentList?.map((student, idx) => (
+                      <tr key={student.id || idx} className="hover:bg-primary/5 transition-colors">
+                        <td className="p-3 font-medium">{student.name}</td>
+                        <td className="p-3 text-center"><input type="radio" name={`hw_${idx}`} value="completed" checked={homework[student.name] === 'completed'} onChange={(e) => handleHomeworkChange(student.name, e.target.value)} className="w-5 h-5 text-primary border-2 border-dark focus:ring-primary" /></td>
+                        <td className="p-3 text-center"><input type="radio" name={`hw_${idx}`} value="partial" checked={homework[student.name] === 'partial'} onChange={(e) => handleHomeworkChange(student.name, e.target.value)} className="w-5 h-5 text-accent border-2 border-dark focus:ring-accent" /></td>
+                        <td className="p-3 text-center"><input type="radio" name={`hw_${idx}`} value="incomplete" checked={homework[student.name] === 'incomplete'} onChange={(e) => handleHomeworkChange(student.name, e.target.value)} className="w-5 h-5 text-danger border-2 border-dark focus:ring-danger" /></td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -345,38 +349,54 @@ function AddSessionModal({ isOpen, onClose, onSuccess }) {
 }
 
 export default function JournalSessions() {
-  const [activeStudent, setActiveStudent] = useState(studentsList[0])
+  const [activeStudent, setActiveStudent] = useState('')
+  const [activeSession, setActiveSession] = useState(null)
+  const [selectedClass, setSelectedClass] = useState(null)
+  const [classesList, setClassesList] = useState([])
+
   const [isGradeModalOpen, setIsGradeModalOpen] = useState(false)
   const [isAddSessionModalOpen, setIsAddSessionModalOpen] = useState(false)
   const [sessionsList, setSessionsList] = useState([])
   const [loading, setLoading] = useState(true)
 
-  const fetchSessions = async () => {
+  const fetchData = async () => {
     try {
-      const sessionsSnapshot = await getDocs(collection(db, 'journalSessions'))
+      setLoading(true)
+      const [sessionsSnapshot, classesSnapshot] = await Promise.all([
+        getDocs(collection(db, 'journalSessions')),
+        getDocs(collection(db, 'classes'))
+      ])
+      
       const sessionsData = sessionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      const classesData = classesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      
+      if (classesData.length > 0) {
+        setClassesList(classesData)
+        setSelectedClass(classesData[0])
+        if (classesData[0].studentList && classesData[0].studentList.length > 0) {
+          setActiveStudent(classesData[0].studentList[0].name)
+        }
+      }
+
       if (sessionsData.length > 0) {
         setSessionsList(sessionsData)
+        setActiveSession(sessionsData[0])
       } else {
-        setSessionsList([
-          { id: 1, title: 'Session 1: Present Simple & Continuous', date: 'May 29', active: true },
-          { id: 2, title: 'Session 2: Vocabulary - Family & Friends', date: 'May 28' },
-          { id: 3, title: 'Session 3: Listening - Short Conversations', date: 'May 27' },
-          { id: 4, title: 'Session 4: Past Simple vs Present Perfect', date: 'May 26' },
-          { id: 5, title: 'Session 5: Speaking - Describing People', date: 'May 25' },
-          { id: 6, title: 'Session 6: Reading - True/False/Not Given', date: 'May 24' },
-        ])
+        setSessionsList([])
+        setActiveSession(null)
       }
     } catch (error) {
-      console.error("Error fetching sessions:", error)
+      console.error("Error fetching data:", error)
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchSessions()
+    fetchData()
   }, [])
+
+  const currentStudents = selectedClass?.studentList?.map(s => s.name) || []
 
   if (loading) return <div className="flex min-h-screen items-center justify-center font-headline text-2xl text-dark">Loading Sessions...</div>
 
@@ -397,17 +417,23 @@ export default function JournalSessions() {
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center gap-2">
                 <h2 className="font-headline font-bold text-xl">Sessions</h2>
-                <span className="bg-secondary text-dark px-2 py-0.5 rounded-md font-label font-bold text-xs memphis-border">8 Sessions</span>
+                <span className="bg-secondary text-dark px-2 py-0.5 rounded-md font-label font-bold text-xs memphis-border">{sessionsList.length} Sessions</span>
               </div>
-              <button onClick={() => setIsAddSessionModalOpen(true)} className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center memphis-border hover:bg-dark transition-colors">
+              <button onClick={() => {
+                if (!selectedClass) {
+                  alert('Vui lòng tạo hoặc chọn lớp học trước khi tạo Session!')
+                  return
+                }
+                setIsAddSessionModalOpen(true)
+              }} className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center memphis-border hover:bg-dark transition-colors">
                 <span className="material-symbols-outlined text-sm">add</span>
               </button>
             </div>
             
             <div className="flex-1 overflow-y-auto pr-2 space-y-3">
               {sessionsList.map((s) => (
-                <div key={s.id} className={`p-4 rounded-xl memphis-border cursor-pointer relative overflow-hidden group transition-all ${s.active ? 'bg-secondary shadow-memphis' : 'bg-white hover:shadow-memphis hover:-translate-y-1'}`}>
-                  {s.active && <div className="absolute -right-4 -top-4 w-12 h-12 bg-white/20 rounded-full rotate-45"></div>}
+                <div key={s.id} onClick={() => setActiveSession(s)} className={`p-4 rounded-xl memphis-border cursor-pointer relative overflow-hidden group transition-all ${activeSession?.id === s.id ? 'bg-secondary shadow-memphis' : 'bg-white hover:shadow-memphis hover:-translate-y-1'}`}>
+                  {activeSession?.id === s.id && <div className="absolute -right-4 -top-4 w-12 h-12 bg-white/20 rounded-full rotate-45"></div>}
                   <div className="flex justify-between items-start mb-2 relative z-10">
                     <h3 className="font-headline font-bold text-dark leading-tight pr-6">{s.title}</h3>
                   </div>
@@ -425,9 +451,33 @@ export default function JournalSessions() {
           <div className="w-[65%] bg-white rounded-2xl memphis-border flex flex-col h-[calc(100vh-220px)] overflow-hidden shadow-sm">
             {/* Sticky Toolbar */}
             <div className="sticky top-0 bg-[#F8F4EC] border-b-2 border-dark p-4 flex flex-col gap-4 z-10">
+              {/* Class Selector Dropdown */}
+              <div className="flex items-center gap-3 border-b-2 border-dark/10 pb-3">
+                <label className="font-label font-bold text-sm text-dark">Chọn lớp học:</label>
+                <select 
+                  className="bg-white border-2 border-dark rounded-lg px-3 py-1.5 font-body text-sm focus:outline-none focus:border-primary shadow-memphis-sm cursor-pointer"
+                  value={selectedClass?.id || ''}
+                  onChange={(e) => {
+                    const cls = classesList.find(c => c.id === e.target.value)
+                    setSelectedClass(cls)
+                    if (cls?.studentList?.length > 0) {
+                      setActiveStudent(cls.studentList[0].name)
+                    } else {
+                      setActiveStudent('')
+                    }
+                  }}
+                >
+                  <option value="" disabled>-- Chọn một lớp học --</option>
+                  {classesList.map(cls => (
+                    <option key={cls.id} value={cls.id}>{cls.name}</option>
+                  ))}
+                </select>
+              </div>
+
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-6 overflow-x-auto pb-1">
-                  {studentsList.map((name) => {
+                  {currentStudents.length === 0 && <span className="font-label text-sm text-dark/60 italic">Lớp học này chưa có học sinh.</span>}
+                  {currentStudents.map((name) => {
                     const isActive = name === activeStudent;
                     return (
                       <div 
@@ -489,7 +539,7 @@ export default function JournalSessions() {
             {/* Editor Area */}
             <div className="flex-1 p-8 overflow-y-auto font-label text-lg text-dark leading-relaxed outline-none" style={{ backgroundImage: 'repeating-linear-gradient(transparent, transparent 31px, #C9B79C 31px, #C9B79C 32px)', lineHeight: '32px' }}>
               <h3 className="font-headline font-bold text-xl mb-4 bg-white inline-block px-2">Nội dung buổi học</h3>
-              <p className="mb-8">Introduce the standard form of a quadratic equation: ax² + bx + c = 0. Demonstrate solving by factoring (quick review). Introduce the Quadratic Formula as the universal method.</p>
+              <p className="mb-8 whitespace-pre-wrap">{activeSession?.content || 'Chưa có nội dung.'}</p>
               
               <h3 className="font-headline font-bold text-xl mb-4 bg-white inline-block px-2">Nhận xét buổi học</h3>
               <div className="bg-background p-4 rounded-xl memphis-border mb-8 relative overflow-hidden group">
@@ -497,11 +547,11 @@ export default function JournalSessions() {
                 <div className="font-headline font-bold text-primary mb-1 flex items-center gap-2 leading-none">
                   <span className="material-symbols-outlined text-[20px]">assignment</span> Nhận xét chung của buổi học
                 </div>
-                <p className="font-body text-sm text-dark mt-2 leading-normal">Lớp học tích cực phát biểu, hầu hết học sinh nắm bắt được công thức tính delta nhưng vẫn còn nhầm lẫn về dấu.</p>
+                <p className="font-body text-sm text-dark mt-2 leading-normal whitespace-pre-wrap">{activeSession?.observation || 'Chưa có nhận xét.'}</p>
               </div>
 
               <h3 className="font-headline font-bold text-xl mb-4 bg-white inline-block px-2">Bài học buổi sau</h3>
-              <p className="mb-4">Phần 2 của phương trình bậc hai: Giải quyết các bài toán đố thực tế (Word Problems).</p>
+              <p className="mb-4 whitespace-pre-wrap">{activeSession?.nextPlan || 'Chưa có kế hoạch.'}</p>
             </div>
           </div>
         </div>
@@ -512,7 +562,7 @@ export default function JournalSessions() {
         onClose={() => setIsGradeModalOpen(false)} 
         studentName={activeStudent}
       />
-      <AddSessionModal isOpen={isAddSessionModalOpen} onClose={() => setIsAddSessionModalOpen(false)} onSuccess={fetchSessions} />
+      <AddSessionModal isOpen={isAddSessionModalOpen} onClose={() => setIsAddSessionModalOpen(false)} onSuccess={fetchData} selectedClass={selectedClass} />
     </div>
   )
 }
