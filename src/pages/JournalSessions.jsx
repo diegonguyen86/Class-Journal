@@ -399,7 +399,9 @@ export default function JournalSessions() {
         getDocs(collection(db, 'classes'))
       ])
       
-      const sessionsData = sessionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      const sessionsData = sessionsSnapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
       const classesData = classesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
       
       if (classesData.length > 0) {
