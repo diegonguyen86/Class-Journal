@@ -395,12 +395,27 @@ function ShareModal({ isOpen, onClose, studentName, session, stats, avgGrade, pe
 
     setIsExporting(true)
     try {
+      const wrapper = document.getElementById('report-card-wrapper')
+      if (wrapper) {
+        wrapper.style.maxHeight = 'none'
+        wrapper.style.overflow = 'visible'
+      }
+
+      // Allow DOM to reflow
+      await new Promise(resolve => setTimeout(resolve, 100))
+
       const element = document.getElementById('report-card-capture')
       const canvas = await html2canvas(element, { 
         scale: 2,
         useCORS: true,
-        backgroundColor: '#F8F4EC'
+        backgroundColor: '#F8F4EC',
+        scrollY: -window.scrollY
       })
+      
+      if (wrapper) {
+        wrapper.style.maxHeight = ''
+        wrapper.style.overflow = ''
+      }
       
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
       const url = URL.createObjectURL(blob)
@@ -434,7 +449,7 @@ function ShareModal({ isOpen, onClose, studentName, session, stats, avgGrade, pe
            </button>
         </div>
 
-        <div className="overflow-y-auto max-h-[70vh] bg-[#F8F4EC] rounded-xl border-4 border-dark shadow-[8px_8px_0px_0px_rgba(47,47,47,1)] flex justify-center p-4 sm:p-8 shrink-0 custom-scrollbar">
+        <div id="report-card-wrapper" className="overflow-y-auto max-h-[70vh] bg-[#F8F4EC] rounded-xl border-4 border-dark shadow-[8px_8px_0px_0px_rgba(47,47,47,1)] flex justify-center p-4 sm:p-8 shrink-0 custom-scrollbar">
            <div id="report-card-capture" className="bg-[#F8F4EC] p-8 font-body text-dark flex flex-col gap-6 w-full max-w-[800px] shrink-0" style={{ backgroundImage: 'repeating-linear-gradient(transparent, transparent 31px, #C9B79C 31px, #C9B79C 32px)', lineHeight: '32px' }}>
              
              <div className="flex items-center gap-6 bg-white p-6 rounded-2xl border-4 border-dark shadow-[6px_6px_0px_0px_rgba(47,47,47,1)] relative z-10">
