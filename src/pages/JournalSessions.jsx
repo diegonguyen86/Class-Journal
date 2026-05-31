@@ -536,12 +536,15 @@ export default function JournalSessions() {
     const studentData = selectedClass?.studentList?.find(s => s.name === activeStudent)
     const parentPhone = studentData?.phone || ''
     
-    const message = `Kính gửi Phụ huynh em ${activeStudent},\nĐây là nhận xét và nội dung buổi học ngày ${activeSession.date}:\n\n📌 NHẬN XÉT CÁ NHÂN:\n${personalNote || 'Không có nhận xét riêng.'}\n\n📖 NỘI DUNG BUỔI HỌC:\n${activeSession.content || 'Không có nội dung.'}\n\n🗣 NHẬN XÉT CHUNG CỦA LỚP:\n${activeSession.observation || 'Không có nhận xét chung.'}\n\n📝 KẾ HOẠCH BUỔI SAU:\n${activeSession.nextPlan || 'Không có kế hoạch.'}`
+    const sortedSessions = [...sessionsList].sort((a, b) => new Date(a.date) - new Date(b.date))
+    const sessionIndex = sortedSessions.findIndex(s => s.id === activeSession.id) + 1
+    
+    const message = `Kính gửi Phụ huynh em ${activeStudent},\nĐây là nhận xét và nội dung buổi học ngày ${activeSession.date}:\n\n📊 THỐNG KÊ HỌC TẬP:\n- Điểm danh: ${studentStats.att}% (${studentStats.attCount}/${studentStats.attTotal}, ${studentStats.lateCount} muộn)\n- Bài tập: ${studentStats.hw}% (${studentStats.hwCompleted} Hoàn thành, ${studentStats.hwPartial} Mới xong 1 phần, ${studentStats.hwIncomplete} Chưa làm)\n- Điểm TB (Buổi học thứ ${sessionIndex}): ${avgGrade}\n\n📌 NHẬN XÉT CÁ NHÂN:\n${personalNote || 'Không có nhận xét riêng.'}\n\n📖 NỘI DUNG BUỔI HỌC:\n${activeSession.content || 'Không có nội dung.'}\n\n🗣 NHẬN XÉT CHUNG CỦA LỚP:\n${activeSession.observation || 'Không có nhận xét chung.'}\n\n📝 KẾ HOẠCH BUỔI SAU:\n${activeSession.nextPlan || 'Không có kế hoạch.'}`
     
     navigator.clipboard.writeText(message).then(() => {
        alert("Đã sao chép nội dung chia sẻ vào Khay nhớ tạm (Clipboard)!")
        if (parentPhone) {
-         window.open(`https://zalo.me/${parentPhone}`, '_blank')
+         window.open(`https://zalo.me/${parentPhone}?text=${encodeURIComponent(message)}`, '_blank')
        }
     }).catch(err => {
        console.error("Failed to copy text: ", err)
