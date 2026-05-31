@@ -541,14 +541,16 @@ export default function JournalSessions() {
     
     const message = `Kính gửi Phụ huynh em ${activeStudent},\nĐây là nhận xét và nội dung buổi học ngày ${activeSession.date}:\n\n📊 THỐNG KÊ HỌC TẬP:\n- Điểm danh: ${studentStats.att}% (${studentStats.attCount}/${studentStats.attTotal}, ${studentStats.lateCount} muộn)\n- Bài tập: ${studentStats.hw}% (${studentStats.hwCompleted} Hoàn thành, ${studentStats.hwPartial} Mới xong 1 phần, ${studentStats.hwIncomplete} Chưa làm)\n- Điểm TB (Buổi học thứ ${sessionIndex}): ${avgGrade}\n\n📌 NHẬN XÉT CÁ NHÂN:\n${personalNote || 'Không có nhận xét riêng.'}\n\n📖 NỘI DUNG BUỔI HỌC:\n${activeSession.content || 'Không có nội dung.'}\n\n🗣 NHẬN XÉT CHUNG CỦA LỚP:\n${activeSession.observation || 'Không có nhận xét chung.'}\n\n📝 KẾ HOẠCH BUỔI SAU:\n${activeSession.nextPlan || 'Không có kế hoạch.'}`
     
+    if (!parentPhone) {
+      alert("Học sinh này chưa có số điện thoại phụ huynh. Hãy quay lại trang My Classes để thêm số điện thoại nhé!")
+    } else {
+      window.open(`https://zalo.me/${parentPhone}?text=${encodeURIComponent(message)}`, '_blank')
+    }
+
     navigator.clipboard.writeText(message).then(() => {
-       alert("Đã sao chép nội dung chia sẻ vào Khay nhớ tạm (Clipboard)!")
-       if (parentPhone) {
-         window.open(`https://zalo.me/${parentPhone}?text=${encodeURIComponent(message)}`, '_blank')
-       }
+       if (!parentPhone) alert("Tuy nhiên, nội dung tin nhắn đã được lưu vào Clipboard. Bạn có thể tự gửi cho phụ huynh.")
     }).catch(err => {
        console.error("Failed to copy text: ", err)
-       alert("Không thể tự động sao chép. Lỗi: " + err)
     })
   }
 
