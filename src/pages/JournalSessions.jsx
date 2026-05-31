@@ -686,6 +686,9 @@ export default function JournalSessions() {
     }
   }
 
+  const sortedSessions = [...sessionsList].sort((a, b) => new Date(a.date) - new Date(b.date))
+  const sessionIndex = sortedSessions.findIndex(s => s.id === activeSession?.id) + 1
+
   const handleShareImage = () => {
     if (!activeSession || !activeStudent) return
     setIsShareModalOpen(true)
