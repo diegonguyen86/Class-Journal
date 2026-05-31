@@ -504,6 +504,51 @@ export default function JournalSessions() {
     }
   }
 
+  const [personalNote, setPersonalNote] = useState('')
+
+  useEffect(() => {
+    setPersonalNote(activeSession?.personalNotes?.[activeStudent] || '')
+  }, [activeSession, activeStudent])
+
+  const handleSavePersonalNote = async () => {
+    if (!activeSession) return
+    try {
+      const updatedNotes = {
+        ...(activeSession.personalNotes || {}),
+        [activeStudent]: personalNote
+      }
+      const sessionRef = doc(db, 'journalSessions', activeSession.id)
+      await updateDoc(sessionRef, { personalNotes: updatedNotes })
+      
+      const updatedSession = { ...activeSession, personalNotes: updatedNotes }
+      setActiveSession(updatedSession)
+      setSessionsList(prev => prev.map(s => s.id === activeSession.id ? updatedSession : s))
+      alert('Đã lưu nhận xét riêng thành công!')
+    } catch (e) {
+      console.error(e)
+      alert('Không thể lưu nhận xét. Vui lòng kiểm tra quyền Firestore.')
+    }
+  }
+
+  const handleShareToParent = () => {
+    if (!activeSession || !activeStudent) return
+    
+    const studentData = selectedClass?.studentList?.find(s => s.name === activeStudent)
+    const parentPhone = studentData?.phone || ''
+    
+    const message = `Kính gửi Phụ huynh em ${activeStudent},\nĐây là nhận xét và nội dung buổi học ngày ${activeSession.date}:\n\n📌 NHẬN XÉT CÁ NHÂN:\n${personalNote || 'Không có nhận xét riêng.'}\n\n📖 NỘI DUNG BUỔI HỌC:\n${activeSession.content || 'Không có nội dung.'}\n\n🗣 NHẬN XÉT CHUNG CỦA LỚP:\n${activeSession.observation || 'Không có nhận xét chung.'}\n\n📝 KẾ HOẠCH BUỔI SAU:\n${activeSession.nextPlan || 'Không có kế hoạch.'}`
+    
+    navigator.clipboard.writeText(message).then(() => {
+       alert("Đã sao chép nội dung chia sẻ vào Khay nhớ tạm (Clipboard)!")
+       if (parentPhone) {
+         window.open(`https://zalo.me/${parentPhone}`, '_blank')
+       }
+    }).catch(err => {
+       console.error("Failed to copy text: ", err)
+       alert("Không thể tự động sao chép. Lỗi: " + err)
+    })
+  }
+
   if (loading) return <div className="flex min-h-screen items-center justify-center font-headline text-2xl text-dark">Loading Sessions...</div>
 
   return (
@@ -554,9 +599,9 @@ export default function JournalSessions() {
           </div>
 
           {/* Right Column: Note Editor */}
-          <div className="w-[65%] bg-white rounded-2xl memphis-border flex flex-col h-[calc(100vh-220px)] overflow-hidden shadow-sm">
-            {/* Sticky Toolbar */}
-            <div className="sticky top-0 bg-[#F8F4EC] border-b-2 border-dark p-4 flex flex-col gap-4 z-10">
+          <div className="w-[65%] bg-white rounded-2xl memphis-border flex flex-col h-[calc(100vh-220px)] overflow-y-auto shadow-sm">
+            {/* Top Toolbar */}
+            <div className="bg-[#F8F4EC] border-b-2 border-dark p-4 flex flex-col gap-4 shrink-0">
               {/* Class Selector Dropdown */}
               <div className="flex items-center gap-3 border-b-2 border-dark/10 pb-3">
                 <label className="font-label font-bold text-sm text-dark">Chọn lớp học:</label>
@@ -635,14 +680,14 @@ export default function JournalSessions() {
                 </div>
 
                 <div className="relative">
-                  <textarea className="w-full h-24 p-3 bg-white border-2 border-dark rounded-xl font-body text-sm focus:ring-0 focus:border-primary resize-none" placeholder={`Nhập nhận xét cá nhân cho ${activeStudent}...`}></textarea>
+                  <textarea value={personalNote} onChange={e => setPersonalNote(e.target.value)} className="w-full h-24 p-3 bg-white border-2 border-dark rounded-xl font-body text-sm focus:ring-0 focus:border-primary resize-none" placeholder={`Nhập nhận xét cá nhân cho ${activeStudent}...`}></textarea>
                   <div className="flex items-center gap-3 mt-3">
                     <button 
                       onClick={() => setIsGradeModalOpen(true)}
                       className="flex-1 bg-white text-dark px-4 py-2 rounded-lg font-label font-bold text-sm border-2 border-dark hover:shadow-memphis-sm active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2">
                       <span className="material-symbols-outlined text-sm">edit_note</span> Nhập điểm
                     </button>
-                    <button className="flex-1 bg-primary text-white px-4 py-2 rounded-lg font-label font-bold text-sm memphis-border hover:shadow-memphis-sm active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2">
+                    <button onClick={handleSavePersonalNote} className="flex-1 bg-primary text-white px-4 py-2 rounded-lg font-label font-bold text-sm memphis-border hover:shadow-memphis-sm active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2">
                       <span className="material-symbols-outlined text-sm">save</span> Lưu nhận xét riêng
                     </button>
                   </div>
@@ -651,7 +696,7 @@ export default function JournalSessions() {
             </div>
 
             {/* Editor Area */}
-            <div className="flex-1 p-8 overflow-y-auto font-label text-lg text-dark leading-relaxed outline-none" style={{ backgroundImage: 'repeating-linear-gradient(transparent, transparent 31px, #C9B79C 31px, #C9B79C 32px)', lineHeight: '32px' }}>
+            <div className="p-8 font-label text-lg text-dark leading-relaxed outline-none" style={{ backgroundImage: 'repeating-linear-gradient(transparent, transparent 31px, #C9B79C 31px, #C9B79C 32px)', lineHeight: '32px' }}>
               <h3 className="font-headline font-bold text-xl mb-4 bg-white inline-block px-2">Nội dung buổi học</h3>
               <p className="mb-8 whitespace-pre-wrap">{activeSession?.content || 'Chưa có nội dung.'}</p>
               
@@ -665,7 +710,13 @@ export default function JournalSessions() {
               </div>
 
               <h3 className="font-headline font-bold text-xl mb-4 bg-white inline-block px-2">Bài học buổi sau</h3>
-              <p className="mb-4 whitespace-pre-wrap">{activeSession?.nextPlan || 'Chưa có kế hoạch.'}</p>
+              <p className="mb-10 whitespace-pre-wrap">{activeSession?.nextPlan || 'Chưa có kế hoạch.'}</p>
+
+              <div className="flex justify-center border-t-2 border-dark/20 pt-8 mt-4 bg-white mx-[-32px] px-8 mb-[-32px] pb-8">
+                <button onClick={handleShareToParent} className="bg-accent text-white px-8 py-3 rounded-xl font-headline font-bold text-lg memphis-border hover:-translate-y-1 hover:shadow-memphis transition-all flex items-center justify-center gap-3 w-full sm:w-auto">
+                  <span className="material-symbols-outlined text-2xl">share</span> Chia sẻ cho phụ huynh
+                </button>
+              </div>
             </div>
           </div>
         </div>
