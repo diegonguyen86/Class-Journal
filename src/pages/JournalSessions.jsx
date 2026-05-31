@@ -181,7 +181,7 @@ function AddSessionModal({ isOpen, onClose, onSuccess, selectedClass }) {
         classId: selectedClass?.id
       }
       
-      await addDoc(collection(db, 'journalSessions'), newSession)
+      const docRef = await addDoc(collection(db, 'journalSessions'), newSession)
       
       setSuccessMsg('Tạo Session thành công!')
       
@@ -195,7 +195,7 @@ function AddSessionModal({ isOpen, onClose, onSuccess, selectedClass }) {
         setErrorMsg('')
         setSuccessMsg('')
         
-        if (onSuccess) onSuccess()
+        if (onSuccess) onSuccess(docRef.id)
         onClose()
       }, 1000)
     } catch (error) {
@@ -473,38 +473,28 @@ function ShareModal({ isOpen, onClose, studentName, session, stats, avgGrade, pe
                </div>
              </div>
 
-             {(personalNote || session?.content || session?.observation || session?.nextPlan) && (
-               <div className="bg-white rounded-2xl border-4 border-dark shadow-[6px_6px_0px_0px_rgba(47,47,47,1)] overflow-hidden relative z-10">
-                 {personalNote && (
-                   <div className="p-6 border-b-4 border-dark bg-secondary/10 relative">
-                     <div className="absolute top-0 left-0 w-2 h-full bg-secondary"></div>
-                     <h3 className="font-headline font-bold text-xl text-dark mb-3 flex items-center gap-2"><span className="material-symbols-outlined text-secondary">edit_note</span> NHẬN XÉT CÁ NHÂN</h3>
-                     <p className="font-body text-base text-dark whitespace-pre-wrap leading-relaxed">{personalNote}</p>
-                   </div>
-                 )}
-                 {session?.content && (
-                   <div className="p-6 border-b-4 border-dark bg-white relative">
-                     <div className="absolute top-0 left-0 w-2 h-full bg-primary"></div>
-                     <h3 className="font-headline font-bold text-xl text-dark mb-3 flex items-center gap-2"><span className="material-symbols-outlined text-primary">menu_book</span> NỘI DUNG BUỔI HỌC</h3>
-                     <p className="font-body text-base text-dark whitespace-pre-wrap leading-relaxed">{session?.content}</p>
-                   </div>
-                 )}
-                 {session?.observation && (
-                   <div className="p-6 border-b-4 border-dark bg-white relative">
-                     <div className="absolute top-0 left-0 w-2 h-full bg-accent"></div>
-                     <h3 className="font-headline font-bold text-xl text-dark mb-3 flex items-center gap-2"><span className="material-symbols-outlined text-accent">visibility</span> NHẬN XÉT CHUNG TỪ GIÁO VIÊN</h3>
-                     <p className="font-body text-base text-dark whitespace-pre-wrap leading-relaxed">{session?.observation}</p>
-                   </div>
-                 )}
-                 {session?.nextPlan && (
-                   <div className="p-6 bg-white relative">
-                     <div className="absolute top-0 left-0 w-2 h-full bg-danger"></div>
-                     <h3 className="font-headline font-bold text-xl text-dark mb-3 flex items-center gap-2"><span className="material-symbols-outlined text-danger">event</span> KẾ HOẠCH BUỔI SAU</h3>
-                     <p className="font-body text-base text-dark whitespace-pre-wrap leading-relaxed">{session?.nextPlan}</p>
-                   </div>
-                 )}
-               </div>
-             )}
+             <div className="bg-white rounded-2xl border-4 border-dark shadow-[6px_6px_0px_0px_rgba(47,47,47,1)] overflow-hidden relative z-10 flex flex-col">
+                 <div className="p-6 border-b-4 border-dark bg-secondary/10 relative">
+                   <div className="absolute top-0 left-0 w-2 h-full bg-secondary"></div>
+                   <h3 className="font-headline font-bold text-xl text-dark mb-3 flex items-center gap-2"><span className="material-symbols-outlined text-secondary">edit_note</span> NHẬN XÉT CÁ NHÂN</h3>
+                   <p className="font-body text-base text-dark whitespace-pre-wrap leading-relaxed">{personalNote?.trim() || 'Chưa có nhận xét riêng cho học sinh này.'}</p>
+                 </div>
+                 <div className="p-6 border-b-4 border-dark bg-white relative">
+                   <div className="absolute top-0 left-0 w-2 h-full bg-primary"></div>
+                   <h3 className="font-headline font-bold text-xl text-dark mb-3 flex items-center gap-2"><span className="material-symbols-outlined text-primary">menu_book</span> NỘI DUNG BUỔI HỌC</h3>
+                   <p className="font-body text-base text-dark whitespace-pre-wrap leading-relaxed">{session?.content?.trim() || 'Chưa có nội dung.'}</p>
+                 </div>
+                 <div className="p-6 border-b-4 border-dark bg-white relative">
+                   <div className="absolute top-0 left-0 w-2 h-full bg-accent"></div>
+                   <h3 className="font-headline font-bold text-xl text-dark mb-3 flex items-center gap-2"><span className="material-symbols-outlined text-accent">visibility</span> NHẬN XÉT CHUNG TỪ GIÁO VIÊN</h3>
+                   <p className="font-body text-base text-dark whitespace-pre-wrap leading-relaxed">{session?.observation?.trim() || 'Chưa có nhận xét.'}</p>
+                 </div>
+                 <div className="p-6 bg-white relative">
+                   <div className="absolute top-0 left-0 w-2 h-full bg-danger"></div>
+                   <h3 className="font-headline font-bold text-xl text-dark mb-3 flex items-center gap-2"><span className="material-symbols-outlined text-danger">event</span> KẾ HOẠCH BUỔI SAU</h3>
+                   <p className="font-body text-base text-dark whitespace-pre-wrap leading-relaxed">{session?.nextPlan?.trim() || 'Chưa có kế hoạch.'}</p>
+                 </div>
+             </div>
            </div>
         </div>
 
@@ -526,7 +516,7 @@ export default function JournalSessions() {
   const [sessionsList, setSessionsList] = useState([])
   const [loading, setLoading] = useState(true)
 
-  const fetchData = async () => {
+  const fetchData = async (newSessionId = null) => {
     try {
       setLoading(true)
       const [sessionsSnapshot, classesSnapshot] = await Promise.all([
@@ -541,17 +531,34 @@ export default function JournalSessions() {
       
       if (classesData.length > 0) {
         setClassesList(classesData)
-        setSelectedClass(classesData[0])
-        if (classesData[0].studentList && classesData[0].studentList.length > 0) {
-          setActiveStudent(classesData[0].studentList[0].name)
+        if (!selectedClass) {
+          setSelectedClass(classesData[0])
+          if (classesData[0].studentList && classesData[0].studentList.length > 0) {
+            setActiveStudent(classesData[0].studentList[0].name)
+          }
+        } else {
+          const updatedClass = classesData.find(c => c.id === selectedClass.id) || classesData[0]
+          setSelectedClass(updatedClass)
+          if (!updatedClass.studentList?.find(s => s.name === activeStudent)) {
+            setActiveStudent(updatedClass.studentList?.[0]?.name || '')
+          }
         }
       }
 
       if (sessionsData.length > 0) {
         setSessionsList(sessionsData)
-        const initialClassId = classesData.length > 0 ? classesData[0].id : null
-        const initialFiltered = sessionsData.filter(s => s.classId === initialClassId)
-        setActiveSession(initialFiltered.length > 0 ? initialFiltered[0] : null)
+        const currentClassId = selectedClass ? selectedClass.id : (classesData.length > 0 ? classesData[0].id : null)
+        const initialFiltered = sessionsData.filter(s => s.classId === currentClassId)
+        
+        if (newSessionId && typeof newSessionId === 'string') {
+          const newlyCreated = sessionsData.find(s => s.id === newSessionId)
+          if (newlyCreated) setActiveSession(newlyCreated)
+        } else if (activeSession) {
+          const updatedActive = sessionsData.find(s => s.id === activeSession.id)
+          setActiveSession(updatedActive || (initialFiltered.length > 0 ? initialFiltered[0] : null))
+        } else {
+          setActiveSession(initialFiltered.length > 0 ? initialFiltered[0] : null)
+        }
       } else {
         setSessionsList([])
         setActiveSession(null)
