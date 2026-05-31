@@ -75,6 +75,8 @@ function AddClassModal({ isOpen, onClose, onSuccess }) {
   const [timeEnd, setTimeEnd] = useState('19:30')
   const [room, setRoom] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
+  const [successMsg, setSuccessMsg] = useState('')
 
   const addStudentRow = () => {
     setStudents([...students, { id: Date.now(), name: '', dob: '', parent: '', phone: '' }])
@@ -95,8 +97,9 @@ function AddClassModal({ isOpen, onClose, onSuccess }) {
   }
 
   const handleSubmit = async () => {
-    if (!className) return alert('Class Name is required')
-    if (schedule.length === 0) return alert('Please select at least one day')
+    setErrorMsg('')
+    if (!className) return setErrorMsg('Class Name is required')
+    if (schedule.length === 0) return setErrorMsg('Please select at least one day')
     
     setIsSubmitting(true)
     try {
@@ -117,20 +120,30 @@ function AddClassModal({ isOpen, onClose, onSuccess }) {
       
       await addDoc(collection(db, 'classes'), newClass)
       
-      // Reset form
-      setClassName('')
-      setDescription('')
-      setSchedule([])
-      setTimeStart('18:00')
-      setTimeEnd('19:30')
-      setRoom('')
-      setStudents([{ id: 1, name: '', dob: '', parent: '', phone: '' }])
+      setSuccessMsg('Tạo lớp học thành công!')
       
-      if (onSuccess) onSuccess()
-      onClose()
+      setTimeout(() => {
+        // Reset form
+        setClassName('')
+        setDescription('')
+        setSchedule([])
+        setTimeStart('18:00')
+        setTimeEnd('19:30')
+        setRoom('')
+        setStudents([{ id: 1, name: '', dob: '', parent: '', phone: '' }])
+        setErrorMsg('')
+        setSuccessMsg('')
+        
+        if (onSuccess) onSuccess()
+        onClose()
+      }, 1000)
     } catch (error) {
       console.error("Error adding class: ", error)
-      alert("Failed to add class. Please try again.")
+      if (error.code === 'permission-denied') {
+        setErrorMsg("Không thể lưu: Lỗi phân quyền Firebase. Bạn hãy kiểm tra lại Firestore Rules.")
+      } else {
+        setErrorMsg("Failed to add class. Please try again.")
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -147,6 +160,19 @@ function AddClassModal({ isOpen, onClose, onSuccess }) {
             <span className="material-symbols-outlined text-sm">close</span>
           </button>
         </div>
+        
+        {errorMsg && (
+          <div className="mx-6 mt-6 p-4 bg-danger/10 border-2 border-danger rounded-lg flex items-center gap-3 text-danger font-label font-bold text-sm">
+            <span className="material-symbols-outlined">error</span>
+            {errorMsg}
+          </div>
+        )}
+        {successMsg && (
+          <div className="mx-6 mt-6 p-4 bg-primary/10 border-2 border-primary rounded-lg flex items-center gap-3 text-primary font-label font-bold text-sm">
+            <span className="material-symbols-outlined">check_circle</span>
+            {successMsg}
+          </div>
+        )}
         
         <div className="p-6 overflow-y-auto flex-1 font-body text-sm grid grid-cols-1 lg:grid-cols-2 gap-8 bg-[#F8F4EC]">
           {/* Left Column: Class Info */}

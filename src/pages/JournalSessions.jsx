@@ -144,6 +144,8 @@ function AddSessionModal({ isOpen, onClose, onSuccess, selectedClass }) {
   const [observation, setObservation] = useState('')
   const [nextPlan, setNextPlan] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
+  const [successMsg, setSuccessMsg] = useState('')
 
   const handleAttendanceChange = (student, value) => {
     setAttendance(prev => ({ ...prev, [student]: value }))
@@ -154,8 +156,9 @@ function AddSessionModal({ isOpen, onClose, onSuccess, selectedClass }) {
   }
 
   const handleSubmit = async () => {
-    if (!sessionTitle) return alert('Session Title is required')
-    if (!dateTime) return alert('Date & Time is required')
+    setErrorMsg('')
+    if (!sessionTitle) return setErrorMsg('Session Title is required')
+    if (!dateTime) return setErrorMsg('Date & Time is required')
     
     setIsSubmitting(true)
     try {
@@ -172,18 +175,28 @@ function AddSessionModal({ isOpen, onClose, onSuccess, selectedClass }) {
       
       await addDoc(collection(db, 'journalSessions'), newSession)
       
-      // Reset form
-      setSessionTitle('')
-      setDateTime('')
-      setContent('')
-      setObservation('')
-      setNextPlan('')
+      setSuccessMsg('Tạo Session thành công!')
       
-      if (onSuccess) onSuccess()
-      onClose()
+      setTimeout(() => {
+        // Reset form
+        setSessionTitle('')
+        setDateTime('')
+        setContent('')
+        setObservation('')
+        setNextPlan('')
+        setErrorMsg('')
+        setSuccessMsg('')
+        
+        if (onSuccess) onSuccess()
+        onClose()
+      }, 1000)
     } catch (error) {
       console.error("Error adding session: ", error)
-      alert("Failed to add session. Please try again.")
+      if (error.code === 'permission-denied') {
+        setErrorMsg("Không thể lưu: Lỗi phân quyền Firebase. Bạn hãy kiểm tra lại Firestore Rules.")
+      } else {
+        setErrorMsg("Failed to add session. Please try again.")
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -211,6 +224,19 @@ function AddSessionModal({ isOpen, onClose, onSuccess, selectedClass }) {
             <span className="material-symbols-outlined text-dark group-hover:text-danger">close</span>
           </button>
         </div>
+
+        {errorMsg && (
+          <div className="mx-6 mt-6 p-4 bg-danger/10 border-2 border-danger rounded-lg flex items-center gap-3 text-danger font-label font-bold text-sm">
+            <span className="material-symbols-outlined">error</span>
+            {errorMsg}
+          </div>
+        )}
+        {successMsg && (
+          <div className="mx-6 mt-6 p-4 bg-primary/10 border-2 border-primary rounded-lg flex items-center gap-3 text-primary font-label font-bold text-sm">
+            <span className="material-symbols-outlined">check_circle</span>
+            {successMsg}
+          </div>
+        )}
 
         {/* Modal Body */}
         <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 relative">
