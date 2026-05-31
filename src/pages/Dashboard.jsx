@@ -237,7 +237,7 @@ export default function Dashboard() {
                             </div>
                             <div className="flex-1 min-w-0">
                                <div className="flex justify-between items-start mb-2">
-                                  <h3 className="font-headline font-bold text-lg text-dark">{student.studentName}</h3>
+                                  <h3 className="font-headline font-bold text-lg text-dark break-words">{student.studentName}</h3>
                                   <span className="text-xs font-label bg-white border-2 border-dark/20 px-2.5 py-1 rounded-md text-dark/70 shadow-sm">{student.className}</span>
                                </div>
                                <ul className="list-disc list-inside text-sm font-body text-danger/90 space-y-1">

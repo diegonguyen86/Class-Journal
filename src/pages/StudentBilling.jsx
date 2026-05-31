@@ -129,7 +129,7 @@ function InvoiceModal({ isOpen, onClose }) {
               <label className="block font-label font-bold text-dark mb-2 flex items-center gap-2">
                 <span className="material-symbols-outlined text-sm text-secondary">edit_note</span> Notes & Terms
               </label>
-              <textarea className="w-full h-full min-h-[120px] p-4 rounded-xl border-2 border-dark shadow-memphis-sm bg-white text-dark font-body focus:ring-0 focus:outline-none focus:border-primary resize-none placeholder:text-dark/30 hover:bg-background/10 transition-colors" placeholder="Thank you for your business. Payment is due within 14 days of invoice date."></textarea>
+              <textarea className="w-full h-full min-h-[120px] p-4 rounded-xl border-2 border-dark shadow-memphis-sm bg-white text-dark font-body focus:ring-0 focus:outline-none focus:border-primary resize-none placeholder:text-dark/30 hover:bg-background/10 transition-colors break-words" placeholder="Thank you for your business. Payment is due within 14 days of invoice date."></textarea>
             </div>
             
             <div className="bg-white p-6 rounded-xl border-2 border-dark shadow-[4px_4px_0_0_#C9B79C] flex flex-col justify-center relative overflow-hidden">

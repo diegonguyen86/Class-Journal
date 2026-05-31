@@ -16,7 +16,7 @@ function ClassModal({ cls, onClose }) {
               <span className="material-symbols-outlined text-3xl">{cls.icon}</span>
             </div>
             <div>
-              <h2 className="font-headline text-3xl font-extrabold">{cls.name}</h2>
+              <h2 className="font-headline text-3xl font-extrabold break-words">{cls.name}</h2>
               <p className="font-label text-white/80">{cls.room} · {cls.days} {cls.time}</p>
             </div>
           </div>
@@ -40,7 +40,7 @@ function ClassModal({ cls, onClose }) {
                       <div className="w-full h-full bg-secondary/30 flex items-center justify-center font-bold text-sm text-dark">{stu.name.split(' ').map(n=>n[0]).join('')}</div>
                     </div>
                     <div>
-                      <h4 className="font-headline font-bold text-lg text-dark">{stu.name}</h4>
+                      <h4 className="font-headline font-bold text-lg text-dark break-words">{stu.name}</h4>
                       <div className="flex flex-wrap gap-x-4 gap-y-1 font-body text-xs text-dark/70 mt-1">
                         <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">cake</span> {stu.dob}</span>
                         <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">family_restroom</span> Phụ huynh: {stu.parent}</span>
@@ -210,7 +210,7 @@ function AddClassModal({ isOpen, onClose, onSuccess, editingClass }) {
             </div>
             <div>
               <label className="font-label font-bold text-sm text-dark">Description (Optional)</label>
-              <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Brief description of the class..." className="w-full bg-secondary/20 border-2 border-dark rounded-lg p-2 mt-1 focus:outline-none focus:border-primary resize-none h-20 shadow-memphis-sm placeholder:text-dark/40" />
+              <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Brief description of the class..." className="w-full bg-secondary/20 border-2 border-dark rounded-lg p-2 mt-1 focus:outline-none focus:border-primary resize-none h-20 shadow-memphis-sm placeholder:text-dark/40 break-words" />
             </div>
             
             <div>

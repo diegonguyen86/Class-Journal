@@ -492,22 +492,22 @@ function ShareModal({ isOpen, onClose, studentName, session, stats, avgGrade, pe
                  <div className="p-6 border-b-4 border-dark bg-secondary/10 relative">
                    <div className="absolute top-0 left-0 w-2 h-full bg-secondary"></div>
                    <h3 className="font-headline font-bold text-xl text-dark mb-3 flex items-center gap-2"><span className="material-symbols-outlined text-secondary">edit_note</span> NHẬN XÉT CÁ NHÂN</h3>
-                   <p className="font-body text-base text-dark whitespace-pre-wrap leading-relaxed break-words">{personalNote?.trim() || 'Chưa có nhận xét riêng cho học sinh này.'}</p>
+                   <p className="font-body text-base text-dark whitespace-pre-wrap leading-relaxed break-all">{personalNote?.trim() || 'Chưa có nhận xét riêng cho học sinh này.'}</p>
                  </div>
                  <div className="p-6 border-b-4 border-dark bg-white relative">
                    <div className="absolute top-0 left-0 w-2 h-full bg-primary"></div>
                    <h3 className="font-headline font-bold text-xl text-dark mb-3 flex items-center gap-2"><span className="material-symbols-outlined text-primary">menu_book</span> NỘI DUNG BUỔI HỌC</h3>
-                   <p className="font-body text-base text-dark whitespace-pre-wrap leading-relaxed break-words">{session?.content?.trim() || 'Chưa có nội dung.'}</p>
+                   <p className="font-body text-base text-dark whitespace-pre-wrap leading-relaxed break-all">{session?.content?.trim() || 'Chưa có nội dung.'}</p>
                  </div>
                  <div className="p-6 border-b-4 border-dark bg-white relative">
                    <div className="absolute top-0 left-0 w-2 h-full bg-accent"></div>
                    <h3 className="font-headline font-bold text-xl text-dark mb-3 flex items-center gap-2"><span className="material-symbols-outlined text-accent">visibility</span> NHẬN XÉT CHUNG TỪ GIÁO VIÊN</h3>
-                   <p className="font-body text-base text-dark whitespace-pre-wrap leading-relaxed break-words">{session?.observation?.trim() || 'Chưa có nhận xét.'}</p>
+                   <p className="font-body text-base text-dark whitespace-pre-wrap leading-relaxed break-all">{session?.observation?.trim() || 'Chưa có nhận xét.'}</p>
                  </div>
                  <div className="p-6 bg-white relative">
                    <div className="absolute top-0 left-0 w-2 h-full bg-danger"></div>
                    <h3 className="font-headline font-bold text-xl text-dark mb-3 flex items-center gap-2"><span className="material-symbols-outlined text-danger">event</span> KẾ HOẠCH BUỔI SAU</h3>
-                   <p className="font-body text-base text-dark whitespace-pre-wrap leading-relaxed break-words">{session?.nextPlan?.trim() || 'Chưa có kế hoạch.'}</p>
+                   <p className="font-body text-base text-dark whitespace-pre-wrap leading-relaxed break-all">{session?.nextPlan?.trim() || 'Chưa có kế hoạch.'}</p>
                  </div>
              </div>
            </div>
@@ -753,7 +753,7 @@ export default function JournalSessions() {
                 <div key={s.id} onClick={() => setActiveSession(s)} className={`p-4 rounded-xl memphis-border cursor-pointer relative overflow-hidden group transition-all ${activeSession?.id === s.id ? 'bg-secondary shadow-memphis' : 'bg-white hover:shadow-memphis hover:-translate-y-1'}`}>
                   {activeSession?.id === s.id && <div className="absolute -right-4 -top-4 w-12 h-12 bg-white/20 rounded-full rotate-45"></div>}
                   <div className="flex justify-between items-start mb-2 relative z-10">
-                    <h3 className="font-headline font-bold text-dark leading-tight pr-2 break-all">{s.title}</h3>
+                    <h3 className="flex-1 min-w-0 font-headline font-bold text-dark leading-tight pr-2 break-all">{s.title}</h3>
                     <button onClick={(e) => handleDeleteSession(e, s.id)} className="w-6 h-6 rounded-md flex items-center justify-center text-dark/40 hover:text-danger hover:bg-danger/10 transition-colors shrink-0" title="Xoá Session">
                       <span className="material-symbols-outlined text-[16px]">delete</span>
                     </button>
@@ -852,7 +852,7 @@ export default function JournalSessions() {
                 </div>
 
                 <div className="relative">
-                  <textarea value={personalNote} onChange={e => setPersonalNote(e.target.value)} className="w-full h-24 p-3 bg-white border-2 border-dark rounded-xl font-body text-sm focus:ring-0 focus:border-primary resize-none break-words" placeholder={`Nhập nhận xét cá nhân cho ${activeStudent}...`}></textarea>
+                  <textarea value={personalNote} onChange={e => setPersonalNote(e.target.value)} className="w-full h-24 p-3 bg-white border-2 border-dark rounded-xl font-body text-sm focus:ring-0 focus:border-primary resize-none break-all" placeholder={`Nhập nhận xét cá nhân cho ${activeStudent}...`}></textarea>
                   <div className="flex items-center gap-3 mt-3">
                     <button 
                       onClick={() => setIsGradeModalOpen(true)}
@@ -870,7 +870,7 @@ export default function JournalSessions() {
             {/* Editor Area */}
             <div className="p-8 font-label text-lg text-dark leading-relaxed outline-none" style={{ backgroundImage: 'repeating-linear-gradient(transparent, transparent 31px, #C9B79C 31px, #C9B79C 32px)', lineHeight: '32px' }}>
               <h3 className="font-headline font-bold text-xl mb-4 bg-white inline-block px-2">Nội dung buổi học</h3>
-              <p className="mb-8 whitespace-pre-wrap break-words">{activeSession?.content || 'Chưa có nội dung.'}</p>
+              <p className="mb-8 whitespace-pre-wrap break-all">{activeSession?.content || 'Chưa có nội dung.'}</p>
               
               <h3 className="font-headline font-bold text-xl mb-4 bg-white inline-block px-2">Nhận xét buổi học</h3>
               <div className="bg-background p-4 rounded-xl memphis-border mb-8 relative overflow-hidden group">
@@ -878,11 +878,11 @@ export default function JournalSessions() {
                 <div className="font-headline font-bold text-primary mb-1 flex items-center gap-2 leading-none">
                   <span className="material-symbols-outlined text-[20px]">assignment</span> Nhận xét chung của buổi học
                 </div>
-                <p className="font-body text-sm text-dark mt-2 leading-normal whitespace-pre-wrap break-words">{activeSession?.observation || 'Chưa có nhận xét.'}</p>
+                <p className="font-body text-sm text-dark mt-2 leading-normal whitespace-pre-wrap break-all">{activeSession?.observation || 'Chưa có nhận xét.'}</p>
               </div>
 
               <h3 className="font-headline font-bold text-xl mb-4 bg-white inline-block px-2">Bài học buổi sau</h3>
-              <p className="mb-10 whitespace-pre-wrap break-words">{activeSession?.nextPlan || 'Chưa có kế hoạch.'}</p>
+              <p className="mb-10 whitespace-pre-wrap break-all">{activeSession?.nextPlan || 'Chưa có kế hoạch.'}</p>
 
               <div className="flex justify-center border-t-2 border-dark/20 pt-8 mt-4 bg-white mx-[-32px] px-8 mb-[-32px] pb-8">
                 <button onClick={handleShareImage} className="bg-accent text-white px-8 py-3 rounded-xl font-headline font-bold text-lg memphis-border hover:-translate-y-1 hover:shadow-memphis transition-all flex items-center justify-center gap-3 w-full sm:w-auto">
