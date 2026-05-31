@@ -1,0 +1,277 @@
+import { useState } from 'react'
+import TopNavBar from '../components/TopNavBar'
+
+const sampleStudents = [
+  { id: 1, name: 'Nguyễn An', dob: '15/05/2012', parent: 'Nguyễn Văn A', phone: '0901234567' },
+  { id: 2, name: 'Lê Bình', dob: '22/08/2012', parent: 'Lê Thị B', phone: '0987654321' },
+  { id: 3, name: 'Trần Chi', dob: '10/11/2012', parent: 'Trần Văn C', phone: '0912345678' },
+]
+
+const classes = [
+  { id: 1, name: 'IELTS Intensive',    teacher: 'Ms. Sarah Chen', students: 28, days: 'Mon/Wed/Fri', time: '09:00–10:30', room: 'Room 204', attendance: 94, color: '#71816D', icon: 'record_voice_over', studentList: sampleStudents },
+  { id: 2, name: 'English 9B',         teacher: 'Ms. Sarah Chen', students: 24, days: 'Tue/Thu',     time: '11:00–12:30', room: 'Room 108', attendance: 98, color: '#C9B79C', icon: 'book', studentList: sampleStudents },
+  { id: 3, name: 'TOEIC Foundation',   teacher: 'Ms. Sarah Chen', students: 30, days: 'Mon/Wed/Fri', time: '13:30–15:00', room: 'Lab 3',    attendance: 88, color: '#E27D60', icon: 'headphones', studentList: sampleStudents },
+  { id: 4, name: 'Communication Eng',  teacher: 'Ms. Sarah Chen', students: 22, days: 'Tue/Thu',     time: '14:00–15:30', room: 'Room 301', attendance: 91, color: '#D96C75', icon: 'forum', studentList: sampleStudents },
+]
+
+function ClassModal({ cls, onClose }) {
+  if (!cls) return null
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-dark/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-background w-full max-w-3xl rounded-2xl memphis-border-thick shadow-memphis-lg overflow-hidden max-h-[90vh] flex flex-col">
+        {/* Modal Header */}
+        <div className="p-6 flex justify-between items-center text-white" style={{ backgroundColor: cls.color }}>
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-white/20 rounded-full memphis-border border-white/50 flex items-center justify-center">
+              <span className="material-symbols-outlined text-3xl">{cls.icon}</span>
+            </div>
+            <div>
+              <h2 className="font-headline text-3xl font-extrabold">{cls.name}</h2>
+              <p className="font-label text-white/80">{cls.room} · {cls.days} {cls.time}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors border border-white/30">
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        {/* Modal Body */}
+        <div className="p-8 overflow-y-auto flex-1 bg-white/50">
+          <div className="bg-white rounded-xl memphis-border p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="font-headline font-bold text-xl text-dark">Danh sách học sinh</h3>
+              <span className="font-label font-bold text-sm bg-secondary px-3 py-1 rounded-full memphis-border">Sĩ số: {cls.studentList.length}</span>
+            </div>
+            
+            <div className="space-y-4">
+              {cls.studentList.map((stu) => (
+                <div key={stu.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border-2 border-dark rounded-xl bg-background hover:bg-background/80 transition-colors gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full memphis-border overflow-hidden bg-primary ring-2 ring-primary ring-offset-2 flex-shrink-0">
+                      <div className="w-full h-full bg-secondary/30 flex items-center justify-center font-bold text-sm text-dark">{stu.name.split(' ').map(n=>n[0]).join('')}</div>
+                    </div>
+                    <div>
+                      <h4 className="font-headline font-bold text-lg text-dark">{stu.name}</h4>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 font-body text-xs text-dark/70 mt-1">
+                        <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">cake</span> {stu.dob}</span>
+                        <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">family_restroom</span> Phụ huynh: {stu.parent}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 sm:ml-auto">
+                    <button className="flex items-center gap-2 bg-white text-dark px-3 py-2 rounded-lg font-label font-bold text-xs border-2 border-dark shadow-memphis-sm hover:-translate-y-px transition-transform">
+                      <span className="material-symbols-outlined text-sm">call</span> Gọi điện
+                    </button>
+                    <button className="flex items-center gap-2 bg-[#0068FF] text-white px-3 py-2 rounded-lg font-label font-bold text-xs border-2 border-dark shadow-memphis-sm hover:-translate-y-px transition-transform">
+                      <span className="material-symbols-outlined text-sm">chat</span> Nhắn Zalo
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function AddClassModal({ isOpen, onClose }) {
+  const [students, setStudents] = useState([{ id: 1, name: '', dob: '', parent: '', phone: '' }])
+
+  const addStudentRow = () => {
+    setStudents([...students, { id: Date.now(), name: '', dob: '', parent: '', phone: '' }])
+  }
+
+  const removeStudentRow = (id) => {
+    if (students.length > 1) {
+      setStudents(students.filter(s => s.id !== id))
+    }
+  }
+
+  if (!isOpen) return null
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-dark/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white w-full max-w-5xl rounded-2xl memphis-border-thick shadow-memphis-lg flex flex-col max-h-[95vh]">
+        <div className="p-6 border-b-2 border-dark flex justify-between items-center bg-secondary/30">
+          <h2 className="font-headline font-bold text-2xl">Add New Class</h2>
+          <button onClick={onClose} className="w-8 h-8 rounded-full border-2 border-dark flex items-center justify-center hover:bg-dark hover:text-white transition-colors">
+            <span className="material-symbols-outlined text-sm">close</span>
+          </button>
+        </div>
+        
+        <div className="p-6 overflow-y-auto flex-1 font-body text-sm grid grid-cols-1 lg:grid-cols-2 gap-8 bg-[#F8F4EC]">
+          {/* Left Column: Class Info */}
+          <div className="space-y-5">
+            <h3 className="font-headline font-bold text-lg border-b-2 border-dark pb-2 mb-4">Class Information</h3>
+            <div>
+              <label className="font-label font-bold text-sm text-dark">Class Name *</label>
+              <input type="text" placeholder="e.g. IELTS Foundation" className="w-full bg-secondary/20 border-2 border-dark rounded-lg p-2 mt-1 focus:outline-none focus:border-primary shadow-memphis-sm placeholder:text-dark/40" />
+            </div>
+            <div>
+              <label className="font-label font-bold text-sm text-dark">Description (Optional)</label>
+              <textarea placeholder="Brief description of the class..." className="w-full bg-secondary/20 border-2 border-dark rounded-lg p-2 mt-1 focus:outline-none focus:border-primary resize-none h-20 shadow-memphis-sm placeholder:text-dark/40" />
+            </div>
+            
+            <div>
+              <label className="font-label font-bold text-sm text-dark mb-2 block">Schedule (Days of Week) *</label>
+              <div className="flex flex-wrap gap-3 mt-1">
+                {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map(day => (
+                  <label key={day} className="flex items-center gap-1.5 cursor-pointer group">
+                    <input type="checkbox" className="appearance-none w-4 h-4 rounded-sm border-2 border-dark bg-white checked:bg-primary checked:border-primary flex-shrink-0 cursor-pointer shadow-[1px_1px_0px_0px_#2F2F2F] relative checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-[10px] checked:after:font-bold checked:after:left-[2px] checked:after:-top-[1px]" />
+                    <span className="font-label font-bold text-xs">{day}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="font-label font-bold text-sm text-dark">Time *</label>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="relative flex-1">
+                    <input type="time" className="w-full bg-secondary/20 border-2 border-dark rounded-lg p-2 focus:outline-none focus:border-primary text-xs shadow-memphis-sm" defaultValue="18:00" />
+                  </div>
+                  <span>-</span>
+                  <div className="relative flex-1">
+                    <input type="time" className="w-full bg-secondary/20 border-2 border-dark rounded-lg p-2 focus:outline-none focus:border-primary text-xs shadow-memphis-sm" defaultValue="19:30" />
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label className="font-label font-bold text-sm text-dark">Room Number (Optional)</label>
+                <input type="text" placeholder="e.g. Room 101" className="w-full bg-secondary/20 border-2 border-dark rounded-lg p-2 mt-1 focus:outline-none focus:border-primary shadow-memphis-sm placeholder:text-dark/40" />
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Student Roster */}
+          <div className="space-y-4 flex flex-col h-full">
+            <div className="flex justify-between items-center border-b-2 border-dark pb-2 mb-2">
+              <h3 className="font-headline font-bold text-lg">Student Roster</h3>
+              <button onClick={addStudentRow} className="text-xs font-label font-bold bg-secondary px-3 py-1.5 rounded-lg memphis-border flex items-center gap-1 hover:-translate-y-px transition-transform">
+                <span className="material-symbols-outlined text-[14px]">add</span> Add Row
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+              {students.map((stu, i) => (
+                <div key={stu.id} className="bg-secondary/30 border-2 border-dark rounded-xl p-4 relative group shadow-[2px_2px_0px_0px_#2F2F2F]">
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="w-6 h-6 bg-dark text-white rounded-full flex items-center justify-center font-bold text-xs font-label">
+                      {i + 1}
+                    </div>
+                    {students.length > 1 && (
+                      <button onClick={() => removeStudentRow(stu.id)} className="text-danger hover:text-white hover:bg-danger w-6 h-6 rounded-full flex items-center justify-center transition-colors">
+                        <span className="material-symbols-outlined text-[14px]">close</span>
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="font-label font-bold text-xs text-dark/70">Student Name</label>
+                      <input type="text" placeholder="Full name" className="w-full bg-white border-2 border-dark/20 rounded-md p-1.5 mt-1 focus:border-primary focus:outline-none text-xs shadow-[1px_1px_0px_0px_rgba(47,47,47,0.1)]" />
+                    </div>
+                    <div>
+                      <label className="font-label font-bold text-xs text-dark/70">Date of Birth</label>
+                      <input type="date" className="w-full bg-white border-2 border-dark/20 rounded-md p-1.5 mt-1 focus:border-primary focus:outline-none text-xs shadow-[1px_1px_0px_0px_rgba(47,47,47,0.1)]" />
+                    </div>
+                    <div>
+                      <label className="font-label font-bold text-xs text-dark/70">Parent Name</label>
+                      <input type="text" placeholder="Parent full name" className="w-full bg-white border-2 border-dark/20 rounded-md p-1.5 mt-1 focus:border-primary focus:outline-none text-xs shadow-[1px_1px_0px_0px_rgba(47,47,47,0.1)]" />
+                    </div>
+                    <div>
+                      <label className="font-label font-bold text-xs text-dark/70">Contact Phone</label>
+                      <input type="tel" placeholder="Phone number" className="w-full bg-white border-2 border-dark/20 rounded-md p-1.5 mt-1 focus:border-primary focus:outline-none text-xs shadow-[1px_1px_0px_0px_rgba(47,47,47,0.1)]" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="p-4 border-t-2 border-dark bg-secondary/30 flex justify-end gap-3">
+          <button onClick={onClose} className="px-5 py-2 font-label font-bold text-dark/70 hover:bg-white rounded-lg border-2 border-transparent transition-colors">Cancel</button>
+          <button onClick={onClose} className="px-6 py-2 font-label font-bold text-white bg-primary border-2 border-dark rounded-lg shadow-memphis hover:-translate-y-px transition-transform flex items-center gap-2">
+            <span className="material-symbols-outlined text-sm">save</span> Create Class
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function MyClasses() {
+  const [activeClass, setActiveClass] = useState(null)
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+
+  return (
+    <div className="flex flex-col min-h-screen">
+      <TopNavBar />
+      <main className="flex-1 p-8">
+        {/* Header */}
+        <div className="flex justify-between items-end mb-8">
+          <div>
+            <h1 className="font-headline text-4xl font-extrabold text-dark mb-1">My Classes</h1>
+            <p className="font-label text-lg text-dark/70">Manage your classrooms and student rosters</p>
+          </div>
+          <button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-2 bg-accent text-white px-6 py-2.5 rounded-lg memphis-border shadow-memphis font-label font-bold hover:-translate-y-0.5 transition-transform">
+            <span className="material-symbols-outlined">add</span> Add Class
+          </button>
+        </div>
+
+        {/* Class Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+          {classes.map((cls) => (
+            <div
+              key={cls.id}
+              className="bg-white rounded-2xl memphis-border shadow-memphis overflow-hidden flex flex-col cursor-pointer hover:-translate-y-1 transition-transform"
+              onClick={() => setActiveClass(cls)}
+            >
+              {/* Card Banner */}
+              <div className="h-24 relative border-b-2 border-dark" style={{ backgroundColor: cls.color }}>
+                <div className="absolute -bottom-7 left-6 w-14 h-14 bg-white rounded-full memphis-border flex items-center justify-center">
+                  <span className="material-symbols-outlined text-2xl" style={{ color: cls.color }}>{cls.icon}</span>
+                </div>
+              </div>
+              {/* Card Body */}
+              <div className="p-6 pt-10 flex-1 flex flex-col">
+                <div className="flex justify-between items-start mb-1">
+                  <h2 className="font-headline text-2xl font-bold text-dark">{cls.name}</h2>
+                  <span className="font-label text-xs font-bold px-2 py-1 rounded memphis-border" style={{ backgroundColor: cls.color + '33', color: cls.color }}>{cls.time}</span>
+                </div>
+                <p className="font-label text-dark/70 mb-4 text-sm">{cls.teacher}</p>
+                <div className="flex items-center gap-4 font-body text-sm text-dark mb-5 flex-wrap">
+                  <span className="flex items-center gap-1"><span className="material-symbols-outlined text-base">group</span> {cls.students} Students</span>
+                  <span className="flex items-center gap-1"><span className="material-symbols-outlined text-base">calendar_today</span> {cls.days}</span>
+                  <span className="flex items-center gap-1"><span className="material-symbols-outlined text-base">meeting_room</span> {cls.room}</span>
+                </div>
+                {/* Attendance Bar */}
+                <div className="mb-5">
+                  <div className="flex justify-between font-label text-sm font-bold mb-1">
+                    <span>Attendance</span><span>{cls.attendance}%</span>
+                  </div>
+                  <div className="w-full h-3 bg-background rounded-full memphis-border overflow-hidden">
+                    <div className="h-full border-r-2 border-dark" style={{ width: cls.attendance + '%', backgroundColor: cls.color }} />
+                  </div>
+                </div>
+                <div className="mt-auto flex gap-3 pt-4 border-t-2 border-dark/10">
+                  <button className="flex-1 border-2 border-primary text-primary font-label font-bold py-2 rounded-lg hover:bg-primary/10 transition-colors text-sm">View Details</button>
+                  <button className="px-4 border-2 border-dark/20 rounded-lg hover:bg-background transition-colors">
+                    <span className="material-symbols-outlined text-xl">edit_note</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </main>
+
+      <ClassModal cls={activeClass} onClose={() => setActiveClass(null)} />
+      <AddClassModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
+    </div>
+  )
+}
