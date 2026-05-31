@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { collection, getDocs, addDoc } from 'firebase/firestore'
+import { collection, getDocs, addDoc, doc, updateDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import TopNavBar from '../components/TopNavBar'
 
@@ -12,8 +12,14 @@ const initialSkills = [
   { id: 'write',   name: 'Kỹ năng viết',  icon: 'edit',               color: '#FF69B4', score: 7.5, comment: 'Bài viết có bố cục rõ ràng, diễn đạt mạch lạc. Cần chú ý lỗi chính tả và ngữ pháp.' },
 ]
 
-function GradeModal({ isOpen, onClose, studentName }) {
+function GradeModal({ isOpen, onClose, studentName, onSave, savedDetails }) {
   const [skills, setSkills] = useState(initialSkills)
+
+  useEffect(() => {
+    if (isOpen) {
+      setSkills(savedDetails || initialSkills)
+    }
+  }, [isOpen, savedDetails])
 
   const updateScore = (id, newScore) => {
     setSkills(skills.map(s => s.id === id ? { ...s, score: Number(newScore) || 0 } : s))
@@ -116,7 +122,7 @@ function GradeModal({ isOpen, onClose, studentName }) {
           <button onClick={onClose} className="px-4 py-2 font-label font-bold text-dark/70 hover:text-dark hover:bg-background rounded-lg transition-colors text-sm">
             Hủy
           </button>
-          <button className="px-5 py-2 font-label font-bold text-white bg-primary border-2 border-dark rounded-lg hover:bg-primary/90 transition-all flex items-center gap-2 shadow-memphis hover:-translate-y-px hover:shadow-memphis-lg active:translate-y-0.5 active:shadow-none text-sm">
+          <button onClick={() => onSave(totalScore, skills)} className="px-5 py-2 font-label font-bold text-white bg-primary border-2 border-dark rounded-lg hover:bg-primary/90 transition-all flex items-center gap-2 shadow-memphis hover:-translate-y-px hover:shadow-memphis-lg active:translate-y-0.5 active:shadow-none text-sm">
             <span className="material-symbols-outlined text-[18px]">check</span>
             Lưu điểm
           </button>
@@ -424,6 +430,80 @@ export default function JournalSessions() {
 
   const currentStudents = selectedClass?.studentList?.map(s => s.name) || []
 
+  const studentStats = useMemo(() => {
+    if (!activeStudent || !sessionsList.length) return { att: 0, hw: 0, attCount: 0, attTotal: 0, lateCount: 0, hwCompleted: 0, hwPartial: 0, hwIncomplete: 0 }
+    
+    let attTotal = 0
+    let attCount = 0
+    let lateCount = 0
+    let hwTotal = 0
+    let hwScore = 0
+    let hwCompleted = 0
+    let hwPartial = 0
+    let hwIncomplete = 0
+
+    sessionsList.forEach(session => {
+      if (session.attendance && session.attendance[activeStudent]) {
+        attTotal++
+        if (session.attendance[activeStudent] === 'present') {
+          attCount++
+        } else if (session.attendance[activeStudent] === 'late') {
+          attCount++
+          lateCount++
+        }
+      }
+      if (session.homework && session.homework[activeStudent]) {
+        hwTotal++
+        if (session.homework[activeStudent] === 'completed') {
+          hwScore += 1
+          hwCompleted++
+        } else if (session.homework[activeStudent] === 'partial') {
+          hwScore += 0.5
+          hwPartial++
+        } else if (session.homework[activeStudent] === 'incomplete') {
+          hwIncomplete++
+        }
+      }
+    })
+
+    return {
+      att: attTotal > 0 ? Math.round((attCount / attTotal) * 100) : 0,
+      attCount,
+      attTotal,
+      lateCount,
+      hw: hwTotal > 0 ? Math.round((hwScore / hwTotal) * 100) : 0,
+      hwCompleted,
+      hwPartial,
+      hwIncomplete
+    }
+  }, [activeStudent, sessionsList])
+
+  const activeStudentGradeData = activeSession?.grades?.[activeStudent]
+  const avgGrade = activeStudentGradeData?.totalScore || '--'
+
+  const handleSaveGrade = async (totalScore, details) => {
+    if (!activeSession) {
+      alert("Vui lòng chọn một session trước khi nhập điểm!")
+      return
+    }
+    try {
+      const updatedGrades = {
+        ...(activeSession.grades || {}),
+        [activeStudent]: { totalScore, details }
+      }
+      const sessionRef = doc(db, 'journalSessions', activeSession.id)
+      await updateDoc(sessionRef, { grades: updatedGrades })
+      
+      const updatedSession = { ...activeSession, grades: updatedGrades }
+      setActiveSession(updatedSession)
+      setSessionsList(prev => prev.map(s => s.id === activeSession.id ? updatedSession : s))
+      setIsGradeModalOpen(false)
+    } catch (e) {
+      console.error(e)
+      alert('Không thể lưu điểm. Vui lòng kiểm tra quyền Firestore.')
+    }
+  }
+
   if (loading) return <div className="flex min-h-screen items-center justify-center font-headline text-2xl text-dark">Loading Sessions...</div>
 
   return (
@@ -528,19 +608,27 @@ export default function JournalSessions() {
                 <div className="grid grid-cols-3 gap-3 mb-4">
                   <div className="bg-background p-3 rounded-xl memphis-border flex flex-col items-center justify-center">
                     <div className="font-label text-[10px] font-bold text-primary mb-1 text-center uppercase tracking-wider">Tỉ lệ điểm danh</div>
-                    <div className="font-headline font-extrabold text-2xl text-dark">92%</div>
+                    <div className="font-headline font-extrabold text-2xl text-dark mb-1">{studentStats.att}%</div>
+                    <div className="font-body text-[10px] font-semibold text-dark/70">
+                      {studentStats.attCount}/{studentStats.attTotal} <span className="text-accent">({studentStats.lateCount} muộn)</span>
+                    </div>
                   </div>
                   <div className="bg-secondary p-3 rounded-xl memphis-border flex flex-col items-center justify-center">
                     <div className="font-label text-[10px] font-bold text-dark mb-1 text-center uppercase tracking-wider">Tỉ lệ làm bài tập</div>
-                    <div className="font-headline font-extrabold text-xl text-dark mb-1">85%</div>
-                    <div className="w-full bg-white rounded-full h-1.5 memphis-border">
-                      <div className="bg-accent h-full rounded-full border-r-2 border-dark" style={{ width: '85%' }}></div>
+                    <div className="font-headline font-extrabold text-xl text-dark mb-1">{studentStats.hw}%</div>
+                    <div className="w-full bg-white rounded-full h-1.5 memphis-border mb-1.5">
+                      <div className="bg-accent h-full rounded-full border-r-2 border-dark" style={{ width: `${studentStats.hw}%` }}></div>
+                    </div>
+                    <div className="font-body text-[10px] font-semibold text-dark flex gap-2">
+                      <span className="text-primary" title="Hoàn thành">H: {studentStats.hwCompleted}</span>
+                      <span className="text-dark" title="Một phần">P: {studentStats.hwPartial}</span>
+                      <span className="text-danger" title="Chưa làm">C: {studentStats.hwIncomplete}</span>
                     </div>
                   </div>
-                  <div className="bg-accent p-3 rounded-xl memphis-border flex flex-col items-center justify-center text-white">
-                    <div className="font-label text-[10px] font-bold mb-1 text-center uppercase tracking-wider">Điểm trung bình</div>
+                  <div className="bg-accent p-3 rounded-xl memphis-border flex flex-col items-center justify-center text-white text-center">
+                    <div className="font-label text-[10px] font-bold mb-1 uppercase tracking-wider">Điểm TB (Session này)</div>
                     <div className="flex items-center gap-1">
-                      <span className="font-headline font-extrabold text-2xl">8.5</span>
+                      <span className="font-headline font-extrabold text-2xl">{avgGrade}</span>
                       <span className="material-symbols-outlined text-xl">star</span>
                     </div>
                   </div>
@@ -587,6 +675,8 @@ export default function JournalSessions() {
         isOpen={isGradeModalOpen} 
         onClose={() => setIsGradeModalOpen(false)} 
         studentName={activeStudent}
+        onSave={handleSaveGrade}
+        savedDetails={activeStudentGradeData?.details}
       />
       <AddSessionModal isOpen={isAddSessionModalOpen} onClose={() => setIsAddSessionModalOpen(false)} onSuccess={fetchData} selectedClass={selectedClass} />
     </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { collection, getDocs, addDoc } from 'firebase/firestore'
+import { collection, getDocs, addDoc, doc, updateDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import TopNavBar from '../components/TopNavBar'
 
@@ -66,7 +66,7 @@ function ClassModal({ cls, onClose }) {
   )
 }
 
-function AddClassModal({ isOpen, onClose, onSuccess }) {
+function AddClassModal({ isOpen, onClose, onSuccess, editingClass }) {
   const [students, setStudents] = useState([{ id: 1, name: '', dob: '', parent: '', phone: '' }])
   const [className, setClassName] = useState('')
   const [description, setDescription] = useState('')
@@ -77,6 +77,37 @@ function AddClassModal({ isOpen, onClose, onSuccess }) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
+
+  useEffect(() => {
+    if (isOpen) {
+      if (editingClass) {
+        setClassName(editingClass.name || '')
+        setDescription(editingClass.description || '')
+        setSchedule(editingClass.days ? editingClass.days.split('/') : [])
+        if (editingClass.time) {
+          const [start, end] = editingClass.time.split('–')
+          setTimeStart(start || '18:00')
+          setTimeEnd(end || '19:30')
+        }
+        setRoom(editingClass.room || '')
+        if (editingClass.studentList && editingClass.studentList.length > 0) {
+          setStudents(editingClass.studentList)
+        } else {
+          setStudents([{ id: Date.now(), name: '', dob: '', parent: '', phone: '' }])
+        }
+      } else {
+        setClassName('')
+        setDescription('')
+        setSchedule([])
+        setTimeStart('18:00')
+        setTimeEnd('19:30')
+        setRoom('')
+        setStudents([{ id: Date.now(), name: '', dob: '', parent: '', phone: '' }])
+      }
+      setErrorMsg('')
+      setSuccessMsg('')
+    }
+  }, [isOpen, editingClass])
 
   const addStudentRow = () => {
     setStudents([...students, { id: Date.now(), name: '', dob: '', parent: '', phone: '' }])
@@ -103,7 +134,7 @@ function AddClassModal({ isOpen, onClose, onSuccess }) {
     
     setIsSubmitting(true)
     try {
-      const newClass = {
+      const classData = {
         name: className,
         description,
         days: schedule.join('/'),
@@ -111,29 +142,24 @@ function AddClassModal({ isOpen, onClose, onSuccess }) {
         room,
         students: students.length,
         studentList: students.filter(s => s.name.trim() !== ''),
-        attendance: 100,
-        color: '#D96C75', // Default color
-        icon: 'book',     // Default icon
-        teacher: 'Ms. Sarah Chen', // Default teacher
-        createdAt: new Date().toISOString()
       }
       
-      await addDoc(collection(db, 'classes'), newClass)
-      
-      setSuccessMsg('Tạo lớp học thành công!')
+      if (editingClass) {
+        classData.updatedAt = new Date().toISOString()
+        const classRef = doc(db, 'classes', editingClass.id)
+        await updateDoc(classRef, classData)
+        setSuccessMsg('Cập nhật lớp học thành công!')
+      } else {
+        classData.attendance = 100
+        classData.color = '#D96C75' // Default color
+        classData.icon = 'book'     // Default icon
+        classData.teacher = 'Ms. Sarah Chen' // Default teacher
+        classData.createdAt = new Date().toISOString()
+        await addDoc(collection(db, 'classes'), classData)
+        setSuccessMsg('Tạo lớp học thành công!')
+      }
       
       setTimeout(() => {
-        // Reset form
-        setClassName('')
-        setDescription('')
-        setSchedule([])
-        setTimeStart('18:00')
-        setTimeEnd('19:30')
-        setRoom('')
-        setStudents([{ id: 1, name: '', dob: '', parent: '', phone: '' }])
-        setErrorMsg('')
-        setSuccessMsg('')
-        
         if (onSuccess) onSuccess()
         onClose()
       }, 1000)
@@ -155,7 +181,7 @@ function AddClassModal({ isOpen, onClose, onSuccess }) {
       <div className="absolute inset-0 bg-dark/60 backdrop-blur-sm" onClick={onClose} />
       <div className="relative bg-white w-full max-w-5xl rounded-2xl memphis-border-thick shadow-memphis-lg flex flex-col max-h-[95vh]">
         <div className="p-6 border-b-2 border-dark flex justify-between items-center bg-secondary/30">
-          <h2 className="font-headline font-bold text-2xl">Add New Class</h2>
+          <h2 className="font-headline font-bold text-2xl">{editingClass ? 'Edit Class' : 'Add New Class'}</h2>
           <button onClick={onClose} className="w-8 h-8 rounded-full border-2 border-dark flex items-center justify-center hover:bg-dark hover:text-white transition-colors">
             <span className="material-symbols-outlined text-sm">close</span>
           </button>
@@ -268,7 +294,7 @@ function AddClassModal({ isOpen, onClose, onSuccess }) {
         <div className="p-4 border-t-2 border-dark bg-secondary/30 flex justify-end gap-3">
           <button onClick={onClose} disabled={isSubmitting} className="px-5 py-2 font-label font-bold text-dark/70 hover:bg-white rounded-lg border-2 border-transparent transition-colors">Cancel</button>
           <button onClick={handleSubmit} disabled={isSubmitting} className={`px-6 py-2 font-label font-bold text-white bg-primary border-2 border-dark rounded-lg shadow-memphis hover:-translate-y-px transition-transform flex items-center gap-2 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}>
-            <span className="material-symbols-outlined text-sm">{isSubmitting ? 'hourglass_empty' : 'save'}</span> {isSubmitting ? 'Creating...' : 'Create Class'}
+            <span className="material-symbols-outlined text-sm">{isSubmitting ? 'hourglass_empty' : 'save'}</span> {isSubmitting ? (editingClass ? 'Saving...' : 'Creating...') : (editingClass ? 'Save Changes' : 'Create Class')}
           </button>
         </div>
       </div>
@@ -278,6 +304,7 @@ function AddClassModal({ isOpen, onClose, onSuccess }) {
 
 export default function MyClasses() {
   const [activeClass, setActiveClass] = useState(null)
+  const [editingClass, setEditingClass] = useState(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [classesList, setClassesList] = useState([])
   const [loading, setLoading] = useState(true)
@@ -350,23 +377,31 @@ export default function MyClasses() {
                   <span className="font-label text-xs font-bold px-2 py-1 rounded memphis-border" style={{ backgroundColor: cls.color + '33', color: cls.color }}>{cls.time}</span>
                 </div>
                 <p className="font-label text-dark/70 mb-4 text-sm">{cls.teacher}</p>
-                <div className="flex items-center gap-4 font-body text-sm text-dark mb-5 flex-wrap">
-                  <span className="flex items-center gap-1"><span className="material-symbols-outlined text-base">group</span> {cls.students} Students</span>
-                  <span className="flex items-center gap-1"><span className="material-symbols-outlined text-base">calendar_today</span> {cls.days}</span>
-                  <span className="flex items-center gap-1"><span className="material-symbols-outlined text-base">meeting_room</span> {cls.room}</span>
-                </div>
-                {/* Attendance Bar */}
-                <div className="mb-5">
-                  <div className="flex justify-between font-label text-sm font-bold mb-1">
-                    <span>Attendance</span><span>{cls.attendance}%</span>
+                <div className="flex flex-wrap items-center gap-2 mb-6">
+                  <div className="flex items-center gap-1.5 bg-secondary/30 border-2 border-dark rounded-md px-2.5 py-1 font-label font-bold text-xs text-dark shadow-[1px_1px_0px_0px_#2F2F2F]">
+                    <span className="material-symbols-outlined text-[14px]">group</span>
+                    {cls.students} Students
                   </div>
-                  <div className="w-full h-3 bg-background rounded-full memphis-border overflow-hidden">
-                    <div className="h-full border-r-2 border-dark" style={{ width: cls.attendance + '%', backgroundColor: cls.color }} />
+                  <div className="flex items-center gap-1.5 bg-primary/20 border-2 border-dark rounded-md px-2.5 py-1 font-label font-bold text-xs text-dark shadow-[1px_1px_0px_0px_#2F2F2F]">
+                    <span className="material-symbols-outlined text-[14px]">calendar_today</span>
+                    {cls.days}
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-accent/20 border-2 border-dark rounded-md px-2.5 py-1 font-label font-bold text-xs text-dark shadow-[1px_1px_0px_0px_#2F2F2F]">
+                    <span className="material-symbols-outlined text-[14px]">meeting_room</span>
+                    {cls.room || 'TBD'}
                   </div>
                 </div>
+                
                 <div className="mt-auto flex gap-3 pt-4 border-t-2 border-dark/10">
                   <button className="flex-1 border-2 border-primary text-primary font-label font-bold py-2 rounded-lg hover:bg-primary/10 transition-colors text-sm">View Details</button>
-                  <button className="px-4 border-2 border-dark/20 rounded-lg hover:bg-background transition-colors">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setEditingClass(cls)
+                      setIsAddModalOpen(true)
+                    }} 
+                    className="px-4 border-2 border-dark rounded-lg hover:bg-dark hover:text-white transition-colors"
+                  >
                     <span className="material-symbols-outlined text-xl">edit_note</span>
                   </button>
                 </div>
@@ -377,7 +412,15 @@ export default function MyClasses() {
       </main>
 
       <ClassModal cls={activeClass} onClose={() => setActiveClass(null)} />
-      <AddClassModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onSuccess={fetchClasses} />
+      <AddClassModal 
+        isOpen={isAddModalOpen} 
+        onClose={() => {
+          setIsAddModalOpen(false)
+          setEditingClass(null)
+        }} 
+        onSuccess={fetchClasses} 
+        editingClass={editingClass}
+      />
     </div>
   )
 }
