@@ -731,7 +731,7 @@ export default function JournalSessions() {
         {/* Two Column Layout */}
         <div className="flex flex-1 gap-6 min-h-0 relative z-10">
           {/* Left Column: Lesson List */}
-          <div className="w-[35%] flex flex-col bg-white/60 backdrop-blur-sm rounded-2xl memphis-border p-4 flex-shrink-0 h-[calc(100vh-220px)]">
+          <div className="w-[35%] min-w-0 flex flex-col bg-white/60 backdrop-blur-sm rounded-2xl memphis-border p-4 flex-shrink-0 h-[calc(100vh-220px)]">
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center gap-2">
                 <h2 className="font-headline font-bold text-xl">Sessions</h2>
@@ -748,17 +748,17 @@ export default function JournalSessions() {
               </button>
             </div>
             
-            <div className="flex-1 overflow-y-auto pr-2 space-y-3">
+            <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
               {sessionsList.filter(s => s.classId === selectedClass?.id).map((s) => (
                 <div key={s.id} onClick={() => setActiveSession(s)} className={`p-4 rounded-xl memphis-border cursor-pointer relative overflow-hidden group transition-all ${activeSession?.id === s.id ? 'bg-secondary shadow-memphis' : 'bg-white hover:shadow-memphis hover:-translate-y-1'}`}>
                   {activeSession?.id === s.id && <div className="absolute -right-4 -top-4 w-12 h-12 bg-white/20 rounded-full rotate-45"></div>}
                   <div className="flex justify-between items-start mb-2 relative z-10">
-                    <h3 className="font-headline font-bold text-dark leading-tight pr-2">{s.title}</h3>
+                    <h3 className="font-headline font-bold text-dark leading-tight pr-2 break-all">{s.title}</h3>
                     <button onClick={(e) => handleDeleteSession(e, s.id)} className="w-6 h-6 rounded-md flex items-center justify-center text-dark/40 hover:text-danger hover:bg-danger/10 transition-colors shrink-0" title="Xoá Session">
                       <span className="material-symbols-outlined text-[16px]">delete</span>
                     </button>
                   </div>
-                  <div className="flex justify-between items-end mt-4">
+                  <div className="flex justify-between items-end mt-4 relative z-10">
                     <div className="font-label text-xs font-semibold text-dark/70 flex items-center gap-1">
                       <span className="material-symbols-outlined text-[14px]">calendar_today</span> {s.date}
                     </div>
@@ -769,7 +769,7 @@ export default function JournalSessions() {
           </div>
 
           {/* Right Column: Note Editor */}
-          <div className="w-[65%] bg-white rounded-2xl memphis-border flex flex-col h-[calc(100vh-220px)] overflow-y-auto shadow-sm">
+          <div className="w-[65%] min-w-0 bg-white rounded-2xl memphis-border flex flex-col h-[calc(100vh-220px)] overflow-y-auto shadow-sm">
             {/* Top Toolbar */}
             <div className="bg-[#F8F4EC] border-b-2 border-dark p-4 flex flex-col gap-4 shrink-0">
               {/* Class Selector Dropdown */}
