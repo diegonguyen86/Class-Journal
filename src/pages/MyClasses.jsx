@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import TopNavBar from '../components/TopNavBar'
+import { ConfirmModal, AlertModal } from '../components/Dialogs'
 
 function ClassModal({ cls, onClose }) {
   if (!cls) return null
@@ -308,6 +309,8 @@ export default function MyClasses() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [classesList, setClassesList] = useState([])
   const [loading, setLoading] = useState(true)
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null })
+  const [alertDialog, setAlertDialog] = useState({ isOpen: false, message: '', type: 'info' })
 
   const fetchClasses = async () => {
     try {
@@ -321,16 +324,20 @@ export default function MyClasses() {
     }
   }
 
-  const handleDeleteClass = async (classId, e) => {
+  const handleDeleteClass = (classId, e) => {
     e.stopPropagation()
-    if (window.confirm('Bạn có chắc chắn muốn xoá lớp học này?')) {
-      try {
-        await deleteDoc(doc(db, 'classes', classId))
-        fetchClasses()
-      } catch (error) {
-        console.error("Error deleting class:", error)
-        alert('Có lỗi xảy ra khi xoá lớp học.')
-      }
+    setConfirmDialog({ isOpen: true, id: classId })
+  }
+
+  const confirmDeleteClass = async () => {
+    const classId = confirmDialog.id
+    setConfirmDialog({ isOpen: false, id: null })
+    try {
+      await deleteDoc(doc(db, 'classes', classId))
+      fetchClasses()
+    } catch (error) {
+      console.error("Error deleting class:", error)
+      setAlertDialog({ isOpen: true, message: 'Có lỗi xảy ra khi xoá lớp học.', type: 'error' })
     }
   }
 
@@ -426,6 +433,20 @@ export default function MyClasses() {
         }} 
         onSuccess={fetchClasses} 
         editingClass={editingClass}
+      />
+      <ConfirmModal 
+        isOpen={confirmDialog.isOpen}
+        title="Xác nhận xoá"
+        message="Bạn có chắc chắn muốn xoá lớp học này?"
+        onConfirm={confirmDeleteClass}
+        onCancel={() => setConfirmDialog({ isOpen: false, id: null })}
+      />
+      <AlertModal 
+        isOpen={alertDialog.isOpen}
+        title="Thông báo"
+        message={alertDialog.message}
+        type={alertDialog.type}
+        onClose={() => setAlertDialog({ ...alertDialog, isOpen: false })}
       />
     </div>
   )

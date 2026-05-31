@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import TopNavBar from '../components/TopNavBar'
+import { ConfirmModal, AlertModal } from '../components/Dialogs'
 import html2canvas from 'html2canvas'
 
 const initialSkills = [
@@ -382,7 +383,7 @@ function AddSessionModal({ isOpen, onClose, onSuccess, selectedClass }) {
   )
 }
 
-function ShareModal({ isOpen, onClose, studentName, session, stats, avgGrade, personalNote, selectedClass, sessionIndex }) {
+function ShareModal({ isOpen, onClose, studentName, session, stats, avgGrade, personalNote, selectedClass, sessionIndex, showAlert }) {
   const [isExporting, setIsExporting] = useState(false)
 
   const handleShare = async () => {
@@ -428,7 +429,7 @@ function ShareModal({ isOpen, onClose, studentName, session, stats, avgGrade, pe
       onClose()
     } catch (error) {
       console.error('Error:', error)
-      alert("Có lỗi xảy ra khi tạo ảnh.")
+      showAlert("Có lỗi xảy ra khi tạo ảnh.", "error")
     } finally {
       setIsExporting(false)
     }
@@ -530,6 +531,12 @@ export default function JournalSessions() {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false)
   const [sessionsList, setSessionsList] = useState([])
   const [loading, setLoading] = useState(true)
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null })
+  const [alertDialog, setAlertDialog] = useState({ isOpen: false, message: '', type: 'info' })
+
+  const showAlert = (message, type = 'info') => {
+    setAlertDialog({ isOpen: true, message, type })
+  }
 
   const fetchData = async (newSessionId = null) => {
     try {
@@ -644,7 +651,7 @@ export default function JournalSessions() {
 
   const handleSaveGrade = async (totalScore, details) => {
     if (!activeSession) {
-      alert("Vui lòng chọn một session trước khi nhập điểm!")
+      showAlert("Vui lòng chọn một session trước khi nhập điểm!", "warning")
       return
     }
     try {
@@ -661,14 +668,18 @@ export default function JournalSessions() {
       setIsGradeModalOpen(false)
     } catch (e) {
       console.error(e)
-      alert('Không thể lưu điểm. Vui lòng kiểm tra quyền Firestore.')
+      showAlert('Không thể lưu điểm. Vui lòng kiểm tra quyền Firestore.', 'error')
     }
   }
 
-  const handleDeleteSession = async (e, sessionId) => {
+  const handleDeleteSession = (e, sessionId) => {
     e.stopPropagation()
-    if (!window.confirm("Bạn có chắc chắn muốn xoá Session này? Mọi dữ liệu (điểm danh, bài tập, điểm số, nhận xét) sẽ bị mất vĩnh viễn!")) return
-    
+    setConfirmDialog({ isOpen: true, id: sessionId })
+  }
+
+  const confirmDeleteSession = async () => {
+    const sessionId = confirmDialog.id
+    setConfirmDialog({ isOpen: false, id: null })
     try {
       await deleteDoc(doc(db, 'journalSessions', sessionId))
       const updatedList = sessionsList.filter(s => s.id !== sessionId)
@@ -678,7 +689,7 @@ export default function JournalSessions() {
       }
     } catch (error) {
       console.error("Error deleting session: ", error)
-      alert("Không thể xoá Session. Vui lòng kiểm tra quyền Firestore.")
+      showAlert("Không thể xoá Session. Vui lòng kiểm tra quyền Firestore.", "error")
     }
   }
 
@@ -701,10 +712,10 @@ export default function JournalSessions() {
       const updatedSession = { ...activeSession, personalNotes: updatedNotes }
       setActiveSession(updatedSession)
       setSessionsList(prev => prev.map(s => s.id === activeSession.id ? updatedSession : s))
-      alert('Đã lưu nhận xét riêng thành công!')
+      showAlert('Đã lưu nhận xét riêng thành công!', 'success')
     } catch (e) {
       console.error(e)
-      alert('Không thể lưu nhận xét. Vui lòng kiểm tra quyền Firestore.')
+      showAlert('Không thể lưu nhận xét. Vui lòng kiểm tra quyền Firestore.', 'error')
     }
   }
 
@@ -739,7 +750,7 @@ export default function JournalSessions() {
               </div>
               <button onClick={() => {
                 if (!selectedClass) {
-                  alert('Vui lòng tạo hoặc chọn lớp học trước khi tạo Session!')
+                  showAlert('Vui lòng tạo hoặc chọn lớp học trước khi tạo Session!', 'warning')
                   return
                 }
                 setIsAddSessionModalOpen(true)
@@ -914,6 +925,22 @@ export default function JournalSessions() {
         personalNote={personalNote}
         selectedClass={selectedClass}
         sessionIndex={sessionIndex}
+        showAlert={showAlert}
+      />
+
+      <ConfirmModal 
+        isOpen={confirmDialog.isOpen}
+        title="Xác nhận xoá Session"
+        message="Bạn có chắc chắn muốn xoá Session này? Mọi dữ liệu (điểm danh, bài tập, điểm số, nhận xét) sẽ bị mất vĩnh viễn!"
+        onConfirm={confirmDeleteSession}
+        onCancel={() => setConfirmDialog({ isOpen: false, id: null })}
+      />
+      <AlertModal 
+        isOpen={alertDialog.isOpen}
+        title="Thông báo"
+        message={alertDialog.message}
+        type={alertDialog.type}
+        onClose={() => setAlertDialog({ ...alertDialog, isOpen: false })}
       />
     </div>
   )
