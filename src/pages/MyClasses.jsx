@@ -75,6 +75,7 @@ function AddClassModal({ isOpen, onClose, onSuccess, editingClass }) {
   const [schedule, setSchedule] = useState([])
   const [times, setTimes] = useState({})
   const [room, setRoom] = useState('')
+  const [pricePerSession, setPricePerSession] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
@@ -99,6 +100,7 @@ function AddClassModal({ isOpen, onClose, onSuccess, editingClass }) {
           setTimes({})
         }
         setRoom(editingClass.room || '')
+        setPricePerSession(editingClass.pricePerSession || 0)
         if (editingClass.studentList && editingClass.studentList.length > 0) {
           setStudents(editingClass.studentList)
         } else {
@@ -110,6 +112,7 @@ function AddClassModal({ isOpen, onClose, onSuccess, editingClass }) {
         setSchedule([])
         setTimes({})
         setRoom('')
+        setPricePerSession(0)
         setStudents([{ id: Date.now(), name: '', dob: '', parent: '', phone: '' }])
       }
       setErrorMsg('')
@@ -169,6 +172,7 @@ function AddClassModal({ isOpen, onClose, onSuccess, editingClass }) {
         time: timeStr,
         scheduleConfig: times,
         room,
+        pricePerSession: Number(pricePerSession),
         students: students.length,
         studentList: students.filter(s => s.name.trim() !== ''),
       }
@@ -263,9 +267,18 @@ function AddClassModal({ isOpen, onClose, onSuccess, editingClass }) {
               </div>
             </div>
 
-            <div>
-              <label className="font-label font-bold text-sm text-dark">Room Number (Optional)</label>
-              <input type="text" value={room} onChange={(e) => setRoom(e.target.value)} placeholder="e.g. Room 101" className="w-full bg-secondary/20 border-2 border-dark rounded-lg p-2 mt-1 focus:outline-none focus:border-primary shadow-memphis-sm placeholder:text-dark/40" />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="font-label font-bold text-sm text-dark">Room Number (Optional)</label>
+                <input type="text" value={room} onChange={(e) => setRoom(e.target.value)} placeholder="e.g. Room 101" className="w-full bg-secondary/20 border-2 border-dark rounded-lg p-2 mt-1 focus:outline-none focus:border-primary shadow-memphis-sm placeholder:text-dark/40" />
+              </div>
+              <div>
+                <label className="font-label font-bold text-sm text-dark">Số tiền / Giờ học</label>
+                <div className="relative mt-1">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-dark/50 font-bold">₫</span>
+                  <input type="number" value={pricePerSession} onChange={(e) => setPricePerSession(e.target.value)} placeholder="e.g. 150000" min="0" className="w-full bg-secondary/20 border-2 border-dark rounded-lg p-2 pl-8 focus:outline-none focus:border-primary shadow-memphis-sm placeholder:text-dark/40" />
+                </div>
+              </div>
             </div>
           </div>
 

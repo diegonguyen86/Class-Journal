@@ -137,6 +137,7 @@ function GradeModal({ isOpen, onClose, studentName, onSave, savedDetails }) {
 function AddSessionModal({ isOpen, onClose, onSuccess, selectedClass, editSession }) {
   const [sessionTitle, setSessionTitle] = useState('')
   const [dateTime, setDateTime] = useState('')
+  const [actualDuration, setActualDuration] = useState(1.5)
   
   const [attendance, setAttendance] = useState({})
   const [homework, setHomework] = useState({})
@@ -153,6 +154,7 @@ function AddSessionModal({ isOpen, onClose, onSuccess, selectedClass, editSessio
     if (editSession) {
       setSessionTitle(editSession.title || '')
       setDateTime(editSession.date ? editSession.date.replace(' ', 'T') : '')
+      setActualDuration(editSession.actualDuration || 1.5)
       setAttendance(editSession.attendance || {})
       setHomework(editSession.homework || {})
       setContent(editSession.content || '')
@@ -162,6 +164,7 @@ function AddSessionModal({ isOpen, onClose, onSuccess, selectedClass, editSessio
     } else if (selectedClass && selectedClass.studentList) {
       setSessionTitle('')
       setDateTime('')
+      setActualDuration(1.5)
       setContent('')
       setObservation('')
       setNextPlan('')
@@ -189,6 +192,7 @@ function AddSessionModal({ isOpen, onClose, onSuccess, selectedClass, editSessio
       const sessionData = {
         title: sessionTitle,
         date: dateTime.replace('T', ' '),
+        actualDuration: Number(actualDuration),
         attendance,
         homework,
         content,
@@ -282,8 +286,8 @@ function AddSessionModal({ isOpen, onClose, onSuccess, selectedClass, editSessio
           </div>
 
           {/* 1. Session Title & Time */}
-          <div className="grid grid-cols-1 gap-6 relative z-10">
-            <div className="space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+            <div className="space-y-2 md:col-span-2">
               <label className="block font-label font-bold text-dark text-sm uppercase tracking-wider">Session Title</label>
               <input type="text" value={sessionTitle} onChange={(e) => setSessionTitle(e.target.value)} placeholder="e.g. Lesson 9: Advanced Algebra" className="w-full bg-white border-[2px] border-dark rounded-lg p-3 focus:outline-none focus:ring-0 focus:border-primary shadow-[2px_2px_0px_0px_rgba(47,47,47,0.2)] transition-shadow font-body text-dark placeholder:text-dark/40" />
             </div>
@@ -292,6 +296,13 @@ function AddSessionModal({ isOpen, onClose, onSuccess, selectedClass, editSessio
               <div className="relative">
                 <input type="datetime-local" value={dateTime} onChange={(e) => setDateTime(e.target.value)} className="w-full bg-white border-[2px] border-dark rounded-lg p-3 pl-10 focus:outline-none focus:ring-0 focus:border-primary shadow-[2px_2px_0px_0px_rgba(47,47,47,0.2)] font-body text-dark" />
                 <span className="material-symbols-outlined absolute left-3 top-3.5 text-dark/60 pointer-events-none">calendar_today</span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="block font-label font-bold text-dark text-sm uppercase tracking-wider">Thời gian dạy thực tế (Giờ)</label>
+              <div className="relative">
+                <input type="number" step="0.5" min="0.5" value={actualDuration} onChange={(e) => setActualDuration(e.target.value)} className="w-full bg-white border-[2px] border-dark rounded-lg p-3 pl-10 focus:outline-none focus:ring-0 focus:border-primary shadow-[2px_2px_0px_0px_rgba(47,47,47,0.2)] font-body text-dark" />
+                <span className="material-symbols-outlined absolute left-3 top-3.5 text-dark/60 pointer-events-none">schedule</span>
               </div>
             </div>
           </div>
