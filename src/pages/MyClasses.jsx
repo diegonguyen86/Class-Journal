@@ -1,3 +1,4 @@
+// Updated schedule logic to support dynamic times per day
 import { useState, useEffect } from 'react'
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { db } from '../firebase'
