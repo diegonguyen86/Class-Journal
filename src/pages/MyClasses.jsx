@@ -72,8 +72,7 @@ function AddClassModal({ isOpen, onClose, onSuccess, editingClass }) {
   const [className, setClassName] = useState('')
   const [description, setDescription] = useState('')
   const [schedule, setSchedule] = useState([])
-  const [timeStart, setTimeStart] = useState('18:00')
-  const [timeEnd, setTimeEnd] = useState('19:30')
+  const [times, setTimes] = useState({})
   const [room, setRoom] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
@@ -84,11 +83,19 @@ function AddClassModal({ isOpen, onClose, onSuccess, editingClass }) {
       if (editingClass) {
         setClassName(editingClass.name || '')
         setDescription(editingClass.description || '')
-        setSchedule(editingClass.days ? editingClass.days.split('/') : [])
-        if (editingClass.time) {
+        const days = editingClass.days ? editingClass.days.split('/') : []
+        setSchedule(days)
+        if (editingClass.scheduleConfig) {
+          setTimes(editingClass.scheduleConfig)
+        } else if (editingClass.time) {
           const [start, end] = editingClass.time.split('–')
-          setTimeStart(start || '18:00')
-          setTimeEnd(end || '19:30')
+          const initialTimes = {}
+          days.forEach(d => {
+            initialTimes[d] = { start: start || '18:00', end: end || '19:30' }
+          })
+          setTimes(initialTimes)
+        } else {
+          setTimes({})
         }
         setRoom(editingClass.room || '')
         if (editingClass.studentList && editingClass.studentList.length > 0) {
@@ -100,8 +107,7 @@ function AddClassModal({ isOpen, onClose, onSuccess, editingClass }) {
         setClassName('')
         setDescription('')
         setSchedule([])
-        setTimeStart('18:00')
-        setTimeEnd('19:30')
+        setTimes({})
         setRoom('')
         setStudents([{ id: Date.now(), name: '', dob: '', parent: '', phone: '' }])
       }
@@ -125,7 +131,21 @@ function AddClassModal({ isOpen, onClose, onSuccess, editingClass }) {
   }
 
   const handleScheduleChange = (day) => {
-    setSchedule(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day])
+    if (schedule.includes(day)) {
+      setSchedule(prev => prev.filter(d => d !== day))
+    } else {
+      setSchedule(prev => [...prev, day])
+      if (!times[day]) {
+        setTimes(prev => ({ ...prev, [day]: { start: '18:00', end: '19:30' } }))
+      }
+    }
+  }
+
+  const handleTimeChange = (day, field, value) => {
+    setTimes(prev => ({
+      ...prev,
+      [day]: { ...prev[day], [field]: value }
+    }))
   }
 
   const handleSubmit = async () => {
@@ -135,11 +155,18 @@ function AddClassModal({ isOpen, onClose, onSuccess, editingClass }) {
     
     setIsSubmitting(true)
     try {
+      const timeStr = schedule.length > 0 
+        ? schedule.every(d => times[d]?.start === times[schedule[0]]?.start && times[d]?.end === times[schedule[0]]?.end) 
+          ? `${times[schedule[0]]?.start || '18:00'}–${times[schedule[0]]?.end || '19:30'}`
+          : schedule.map(d => `${d} (${times[d]?.start || '18:00'})`).join(', ')
+        : '';
+
       const classData = {
         name: className,
         description,
         days: schedule.join('/'),
-        time: `${timeStart}–${timeEnd}`,
+        time: timeStr,
+        scheduleConfig: times,
         room,
         students: students.length,
         studentList: students.filter(s => s.name.trim() !== ''),
@@ -215,34 +242,29 @@ function AddClassModal({ isOpen, onClose, onSuccess, editingClass }) {
             </div>
             
             <div>
-              <label className="font-label font-bold text-sm text-dark mb-2 block">Schedule (Days of Week) *</label>
-              <div className="flex flex-wrap gap-3 mt-1">
+              <label className="font-label font-bold text-sm text-dark mb-2 block">Schedule (Days & Times) *</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
                 {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map(day => (
-                  <label key={day} className="flex items-center gap-1.5 cursor-pointer group">
-                    <input type="checkbox" checked={schedule.includes(day)} onChange={() => handleScheduleChange(day)} className="appearance-none w-4 h-4 rounded-sm border-2 border-dark bg-white checked:bg-primary checked:border-primary flex-shrink-0 cursor-pointer shadow-[1px_1px_0px_0px_#2F2F2F] relative checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-[10px] checked:after:font-bold checked:after:left-[2px] checked:after:-top-[1px]" />
-                    <span className="font-label font-bold text-xs">{day}</span>
-                  </label>
+                  <div key={day} className={`flex flex-col gap-2 bg-white p-3 rounded-lg border-2 border-dark shadow-[2px_2px_0px_0px_rgba(47,47,47,0.1)] transition-colors ${schedule.includes(day) ? 'bg-primary/5 border-primary' : ''}`}>
+                    <label className="flex items-center gap-2 cursor-pointer w-max">
+                      <input type="checkbox" checked={schedule.includes(day)} onChange={() => handleScheduleChange(day)} className="appearance-none w-5 h-5 rounded-md border-2 border-dark bg-white checked:bg-primary checked:border-dark flex-shrink-0 cursor-pointer relative checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-xs checked:after:font-bold checked:after:left-[3px] checked:after:-top-[1px]" />
+                      <span className="font-headline font-bold text-sm text-dark">{day}</span>
+                    </label>
+                    {schedule.includes(day) && (
+                      <div className="flex items-center gap-1.5 pt-1 border-t-2 border-dark/10">
+                        <input type="time" value={times[day]?.start || '18:00'} onChange={(e) => handleTimeChange(day, 'start', e.target.value)} className="w-full bg-secondary/20 border-2 border-dark rounded-md p-1 focus:outline-none focus:border-primary font-body text-xs shadow-memphis-sm" />
+                        <span className="font-bold text-dark text-xs">-</span>
+                        <input type="time" value={times[day]?.end || '19:30'} onChange={(e) => handleTimeChange(day, 'end', e.target.value)} className="w-full bg-secondary/20 border-2 border-dark rounded-md p-1 focus:outline-none focus:border-primary font-body text-xs shadow-memphis-sm" />
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="font-label font-bold text-sm text-dark">Time *</label>
-                <div className="flex items-center gap-2 mt-1">
-                  <div className="relative flex-1">
-                    <input type="time" value={timeStart} onChange={(e) => setTimeStart(e.target.value)} className="w-full bg-secondary/20 border-2 border-dark rounded-lg p-2 focus:outline-none focus:border-primary text-xs shadow-memphis-sm" />
-                  </div>
-                  <span>-</span>
-                  <div className="relative flex-1">
-                    <input type="time" value={timeEnd} onChange={(e) => setTimeEnd(e.target.value)} className="w-full bg-secondary/20 border-2 border-dark rounded-lg p-2 focus:outline-none focus:border-primary text-xs shadow-memphis-sm" />
-                  </div>
-                </div>
-              </div>
-              <div>
-                <label className="font-label font-bold text-sm text-dark">Room Number (Optional)</label>
-                <input type="text" value={room} onChange={(e) => setRoom(e.target.value)} placeholder="e.g. Room 101" className="w-full bg-secondary/20 border-2 border-dark rounded-lg p-2 mt-1 focus:outline-none focus:border-primary shadow-memphis-sm placeholder:text-dark/40" />
-              </div>
+            <div>
+              <label className="font-label font-bold text-sm text-dark">Room Number (Optional)</label>
+              <input type="text" value={room} onChange={(e) => setRoom(e.target.value)} placeholder="e.g. Room 101" className="w-full bg-secondary/20 border-2 border-dark rounded-lg p-2 mt-1 focus:outline-none focus:border-primary shadow-memphis-sm placeholder:text-dark/40" />
             </div>
           </div>
 
