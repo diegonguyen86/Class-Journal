@@ -1,172 +1,6 @@
 import TopNavBar from '../components/TopNavBar'
 
-function InvoiceModal({ isOpen, onClose }) {
-  const [lineItems, setLineItems] = useState([
-    { id: 1, desc: 'Tuition Fee - October', qty: 1, price: 450.00 },
-    { id: 2, desc: 'Materials Fee - Art Supplies', qty: 1, price: 45.00 }
-  ])
 
-  const addLineItem = () => {
-    setLineItems([...lineItems, { id: Date.now(), desc: '', qty: 1, price: 0 }])
-  }
-
-  const removeLineItem = (id) => {
-    if (lineItems.length > 1) {
-      setLineItems(lineItems.filter(item => item.id !== id))
-    }
-  }
-
-  const updateLineItem = (id, field, value) => {
-    setLineItems(lineItems.map(item => item.id === id ? { ...item, [field]: value } : item))
-  }
-
-  const subtotal = lineItems.reduce((sum, item) => sum + (Number(item.qty) * Number(item.price)), 0)
-
-  if (!isOpen) return null
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-dark/60 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
-      <div className="bg-white w-full max-w-4xl rounded-[24px] memphis-border-thick shadow-[8px_8px_0_0_#2F2F2F] flex flex-col my-auto relative animate-[slideUp_0.3s_ease-out]">
-        
-        {/* Decorative elements */}
-        <div className="absolute top-0 right-0 w-32 h-32 opacity-30 mix-blend-multiply pointer-events-none rounded-tr-[24px] bg-secondary/40" style={{ clipPath: 'polygon(100% 0, 0% 100%, 100% 100%)' }}></div>
-        <div className="absolute bottom-0 left-0 w-32 h-32 opacity-20 mix-blend-multiply pointer-events-none rounded-bl-[24px] bg-primary/40 rounded-full blur-xl"></div>
-        
-        {/* Header */}
-        <div className="flex justify-between items-center p-6 sm:p-8 border-b-[3px] border-dark bg-background/50 rounded-t-[20px] relative z-10">
-          <div>
-            <h2 className="font-headline text-2xl sm:text-3xl font-black text-dark tracking-tight flex items-center gap-3">
-              <span className="material-symbols-outlined text-accent text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>receipt_long</span>
-              Create New Invoice
-            </h2>
-            <p className="font-label text-dark/70 mt-1 text-sm sm:text-base">Generate a billing statement for student accounts.</p>
-          </div>
-          <button onClick={onClose} className="h-10 w-10 flex items-center justify-center rounded-full border-2 border-dark bg-white hover:bg-danger/20 hover:text-danger transition-colors group">
-            <span className="material-symbols-outlined group-hover:rotate-90 transition-transform duration-300">close</span>
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="p-6 sm:p-8 flex flex-col gap-8 max-h-[70vh] overflow-y-auto relative z-10 bg-white">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="col-span-1 md:col-span-2">
-              <label className="block font-label font-bold text-dark mb-2 flex items-center gap-2">
-                <span className="material-symbols-outlined text-sm text-primary">person</span> Student
-              </label>
-              <div className="relative">
-                <select className="w-full h-12 pl-4 pr-10 rounded-xl border-2 border-dark bg-white text-dark font-body focus:ring-0 focus:outline-none focus:border-primary appearance-none cursor-pointer hover:bg-background/20 transition-colors shadow-memphis-sm">
-                  <option disabled value="">Select a student...</option>
-                  <option value="liam">Liam Thompson</option>
-                  <option value="aria">Aria Rodriguez</option>
-                  <option value="noah">Noah Patel</option>
-                  <option value="emma">Emma Chen</option>
-                </select>
-                <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-dark/50">expand_more</span>
-              </div>
-            </div>
-            
-            <div>
-              <label className="block font-label font-bold text-dark mb-2 flex items-center gap-2">
-                <span className="material-symbols-outlined text-sm text-primary">calendar_today</span> Invoice Date
-              </label>
-              <input type="date" className="w-full h-12 px-4 rounded-xl border-2 border-dark bg-white text-dark font-body focus:ring-0 focus:outline-none focus:border-primary hover:bg-background/20 transition-colors shadow-memphis-sm" defaultValue="2026-05-30" />
-            </div>
-            
-            <div>
-              <label className="block font-label font-bold text-dark mb-2 flex items-center gap-2">
-                <span className="material-symbols-outlined text-sm text-accent">event_upcoming</span> Due Date
-              </label>
-              <input type="date" className="w-full h-12 px-4 rounded-xl border-2 border-dark bg-white text-dark font-body focus:ring-0 focus:outline-none focus:border-accent hover:bg-background/20 transition-colors shadow-memphis-sm" />
-            </div>
-          </div>
-
-          <div className="bg-secondary/20 p-6 rounded-xl border-2 border-dark">
-            <div className="flex justify-between items-end mb-4">
-              <label className="block font-headline font-bold text-lg text-dark flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary">list_alt</span> Line Items
-              </label>
-            </div>
-            
-            <div className="grid grid-cols-12 gap-4 mb-2 px-2 font-label font-bold text-dark/60 text-xs uppercase tracking-wider hidden sm:grid">
-              <div className="col-span-7">Description</div>
-              <div className="col-span-2 text-center">Qty</div>
-              <div className="col-span-2 text-right">Price</div>
-              <div className="col-span-1"></div>
-            </div>
-            
-            <div className="flex flex-col gap-3">
-              {lineItems.map(item => (
-                <div key={item.id} className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center bg-white p-3 rounded-lg border-2 border-dark shadow-[2px_2px_0_0_#2F2F2F] group">
-                  <div className="col-span-1 sm:col-span-7">
-                    <input type="text" value={item.desc} onChange={(e) => updateLineItem(item.id, 'desc', e.target.value)} placeholder="e.g., Tuition Fee" className="w-full bg-transparent border-none p-1 focus:outline-none text-dark font-body placeholder:text-dark/30" />
-                  </div>
-                  <div className="col-span-1 sm:col-span-2 flex items-center gap-2 sm:block">
-                    <span className="text-xs font-bold text-dark/50 sm:hidden w-10">Qty</span>
-                    <input type="number" value={item.qty} onChange={(e) => updateLineItem(item.id, 'qty', e.target.value)} min="1" className="w-full bg-background/50 border-2 border-transparent focus:border-primary rounded p-1 text-center font-body text-dark focus:outline-none" />
-                  </div>
-                  <div className="col-span-1 sm:col-span-2 relative flex items-center gap-2 sm:block">
-                    <span className="text-xs font-bold text-dark/50 sm:hidden w-10">Price</span>
-                    <div className="relative w-full">
-                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-dark/50 font-label">$</span>
-                      <input type="number" value={item.price} onChange={(e) => updateLineItem(item.id, 'price', e.target.value)} min="0" step="0.01" className="w-full bg-background/50 border-2 border-transparent focus:border-primary rounded p-1 pl-6 text-right font-body text-dark focus:outline-none" />
-                    </div>
-                  </div>
-                  <div className="col-span-1 flex justify-end">
-                    <button onClick={() => removeLineItem(item.id)} className="text-dark/30 hover:text-danger transition-colors p-1 rounded hover:bg-danger/10">
-                      <span className="material-symbols-outlined text-[20px]">delete</span>
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            <button onClick={addLineItem} className="mt-4 flex items-center gap-2 font-label font-bold text-primary hover:text-dark transition-colors bg-white/50 border-2 border-dashed border-primary hover:border-dark rounded-lg py-2 px-4 w-full justify-center">
-              <span className="material-symbols-outlined">add_circle</span> Add Line Item
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="flex flex-col">
-              <label className="block font-label font-bold text-dark mb-2 flex items-center gap-2">
-                <span className="material-symbols-outlined text-sm text-secondary">edit_note</span> Notes & Terms
-              </label>
-              <textarea className="w-full h-full min-h-[120px] p-4 rounded-xl border-2 border-dark shadow-memphis-sm bg-white text-dark font-body focus:ring-0 focus:outline-none focus:border-primary resize-none placeholder:text-dark/30 hover:bg-background/10 transition-colors break-words" placeholder="Thank you for your business. Payment is due within 14 days of invoice date."></textarea>
-            </div>
-            
-            <div className="bg-white p-6 rounded-xl border-2 border-dark shadow-[4px_4px_0_0_#C9B79C] flex flex-col justify-center relative overflow-hidden">
-              <div className="absolute -right-4 -top-4 w-16 h-16 bg-primary/10 rounded-full"></div>
-              <div className="space-y-3 font-body relative z-10">
-                <div className="flex justify-between items-center text-dark/70 font-bold">
-                  <span>Subtotal</span>
-                  <span>${subtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between items-center text-dark/70 font-bold">
-                  <span className="flex items-center gap-2">Tax (0%) <span className="material-symbols-outlined text-[16px] cursor-help" title="Click to edit tax rate">edit</span></span>
-                  <span>$0.00</span>
-                </div>
-                <div className="h-[2px] bg-dark/20 w-full my-2"></div>
-                <div className="flex justify-between items-center font-headline font-black text-2xl text-dark">
-                  <span>Total Due</span>
-                  <span className="text-primary">${subtotal.toFixed(2)}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="p-6 sm:p-8 border-t-[3px] border-dark bg-background/50 rounded-b-[20px] flex justify-end gap-4 relative z-10">
-          <button onClick={onClose} className="px-6 py-3 rounded-xl font-label font-bold text-dark bg-white hover:bg-secondary border-2 border-dark transition-all duration-200 hover:shadow-[2px_2px_0_0_#2F2F2F]">
-            Cancel
-          </button>
-          <button onClick={onClose} className="px-8 py-3 rounded-xl font-label font-bold text-white bg-primary hover:bg-primary/90 border-2 border-dark transition-all duration-200 shadow-[4px_4px_0_0_#2F2F2F] hover:-translate-y-px active:translate-y-1 active:translate-x-1 active:shadow-none flex items-center gap-2 group">
-            <span className="material-symbols-outlined text-[20px] group-hover:translate-x-1 transition-transform">send</span>
-            Send Invoice
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 function BillingDetailsModal({ isOpen, onClose, studentData }) {
   if (!isOpen || !studentData) return null
@@ -235,11 +69,12 @@ import { collection, getDocs } from 'firebase/firestore'
 import { db } from '../firebase'
 
 export default function StudentBilling() {
-  const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedStudent, setSelectedStudent] = useState(null)
   const [pendingStudents, setPendingStudents] = useState([])
   const [recentPayments, setRecentPayments] = useState([])
   const [loading, setLoading] = useState(true)
+  const [classesList, setClassesList] = useState([])
+  const [selectedClassFilter, setSelectedClassFilter] = useState('')
 
   useEffect(() => {
     const fetchBillingData = async () => {
@@ -249,6 +84,8 @@ export default function StudentBilling() {
         
         const classesData = classesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
         const sessionsData = sessionsSnapshot.docs.map(doc => doc.data())
+        
+        setClassesList(classesData.map(c => c.name))
 
         let generatedBills = []
         let idCounter = 1
@@ -317,6 +154,13 @@ export default function StudentBilling() {
 
   if (loading) return <div className="flex min-h-screen items-center justify-center font-headline text-2xl text-dark">Loading Billing...</div>
 
+  const filteredStudents = selectedClassFilter ? pendingStudents.filter(s => s.class === selectedClassFilter) : pendingStudents
+  
+  const totalCollected = recentPayments.reduce((sum, p) => {
+    const raw = p.rawAmount || parseFloat(String(p.amount).replace(/[^\d.-]/g, '')) || 0
+    return sum + raw
+  }, 0)
+
   return (
     <div className="flex flex-col min-h-screen">
       <TopNavBar />
@@ -334,10 +178,10 @@ export default function StudentBilling() {
               <div className="absolute -top-6 -right-6 w-24 h-24 bg-primary/20 rounded-full blur-xl"></div>
               <div className="relative z-10">
                 <p className="text-sm font-label font-bold text-primary uppercase tracking-wider mb-1">Total Collected</p>
-                <h3 className="text-4xl font-headline font-bold">$42,850.00</h3>
+                <h3 className="text-4xl font-headline font-bold">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalCollected)}</h3>
                 <p className="text-xs text-dark/60 mt-4 flex items-center gap-1 font-label">
-                  <span className="material-symbols-outlined text-sm text-primary">trending_up</span>
-                  12% increase from last term
+                  <span className="material-symbols-outlined text-sm text-primary">receipt_long</span>
+                  {recentPayments.length} payments recorded
                 </p>
               </div>
             </div>
@@ -355,8 +199,8 @@ export default function StudentBilling() {
               <div className="absolute top-1/2 -right-10 w-20 h-20 bg-accent/20 rounded-lg rotate-45 blur-lg"></div>
               <div className="relative z-10">
                 <p className="text-sm font-label font-bold text-accent uppercase tracking-wider mb-1">Overdue</p>
-                <h3 className="text-4xl font-headline font-bold text-accent">$2,100.00</h3>
-                <p className="text-xs text-dark/60 mt-4 font-label">5 students past due date</p>
+                <h3 className="text-4xl font-headline font-bold text-accent">0 ₫</h3>
+                <p className="text-xs text-dark/60 mt-4 font-label">0 students past due date</p>
               </div>
             </div>
           </section>
@@ -366,12 +210,12 @@ export default function StudentBilling() {
             <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
               <h3 className="text-2xl font-headline font-bold">Học sinh chưa đóng tiền</h3>
               <div className="flex gap-2">
-                <button className="px-4 py-2 bg-white text-sm font-bold memphis-border rounded-lg shadow-memphis-sm hover:-translate-y-px hover:shadow-memphis flex items-center gap-2 transition-all">
-                  <span className="material-symbols-outlined text-sm">filter_list</span> Filter
-                </button>
-                <button onClick={() => setIsModalOpen(true)} className="px-4 py-2 bg-accent text-white text-sm font-bold memphis-border rounded-lg shadow-memphis-sm hover:-translate-y-px hover:shadow-memphis flex items-center gap-2 transition-all">
-                  <span className="material-symbols-outlined text-sm">add</span> New Invoice
-                </button>
+                <select value={selectedClassFilter} onChange={(e) => setSelectedClassFilter(e.target.value)} className="px-4 py-2 bg-white text-sm font-bold memphis-border rounded-lg shadow-memphis-sm hover:-translate-y-px hover:shadow-memphis transition-all focus:outline-none cursor-pointer">
+                  <option value="">Tất cả các lớp</option>
+                  {classesList.map(cls => (
+                    <option key={cls} value={cls}>{cls}</option>
+                  ))}
+                </select>
               </div>
             </div>
             
@@ -388,7 +232,7 @@ export default function StudentBilling() {
                     </tr>
                   </thead>
                   <tbody className="font-label text-sm divide-y divide-dark/10">
-                    {pendingStudents.map((s) => (
+                    {filteredStudents.map((s) => (
                       <tr key={s.id} className="hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => setSelectedStudent(s)}>
                         <td className="py-4 px-6 font-bold flex items-center gap-3">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center border ${s.initialsColor}`}>{s.initials}</div>
@@ -455,7 +299,6 @@ export default function StudentBilling() {
           </section>
         </div>
       </main>
-      <InvoiceModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
       <BillingDetailsModal isOpen={!!selectedStudent} onClose={() => setSelectedStudent(null)} studentData={selectedStudent} />
     </div>
   )
