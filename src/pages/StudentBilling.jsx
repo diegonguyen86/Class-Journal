@@ -92,7 +92,6 @@ export default function StudentBilling() {
 
         classesData.forEach(cls => {
           const price = Number(cls.pricePerSession) || 0
-          if (price === 0) return
 
           const classSessions = sessionsData.filter(s => s.classId === cls.id)
           
@@ -103,7 +102,8 @@ export default function StudentBilling() {
 
             classSessions.forEach(session => {
               // Assume present if no attendance recorded or if marked present/late
-              if (!session.attendance || session.attendance[student.name] !== 'absent') {
+              const att = session.attendance ? session.attendance[student.name] : 'present'
+              if (att !== 'absent' && att !== 'excused') {
                 attendedCount++
                 const duration = Number(session.actualDuration) || 1.5
                 totalHours += duration
@@ -118,23 +118,21 @@ export default function StudentBilling() {
               }
             })
 
-            if (attendedCount > 0) {
-              const amount = totalHours * price
-              generatedBills.push({
-                id: idCounter++,
-                name: student.name,
-                class: cls.name,
-                amount: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount),
-                rawAmount: amount,
-                status: 'Pending',
-                statusColor: 'border-accent text-accent',
-                initials: student.name.split(' ').map(n=>n[0]).join('').substring(0, 2),
-                initialsColor: 'bg-primary/20 text-primary border-primary/30',
-                attendedCount,
-                totalHours,
-                sessionDetails
-              })
-            }
+            const amount = totalHours * price
+            generatedBills.push({
+              id: idCounter++,
+              name: student.name,
+              class: cls.name,
+              amount: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount),
+              rawAmount: amount,
+              status: attendedCount > 0 ? 'Pending' : 'No Sessions',
+              statusColor: attendedCount > 0 ? 'border-accent text-accent' : 'border-dark/40 text-dark/40',
+              initials: student.name.split(' ').map(n=>n[0]).join('').substring(0, 2),
+              initialsColor: 'bg-primary/20 text-primary border-primary/30',
+              attendedCount,
+              totalHours,
+              sessionDetails
+            })
           })
         })
         
