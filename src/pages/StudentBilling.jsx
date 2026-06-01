@@ -80,7 +80,7 @@ export default function StudentBilling() {
     const fetchBillingData = async () => {
       try {
         const classesSnapshot = await getDocs(collection(db, 'classes'))
-        const sessionsSnapshot = await getDocs(collection(db, 'sessions'))
+        const sessionsSnapshot = await getDocs(collection(db, 'journalSessions'))
         
         const classesData = classesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
         const sessionsData = sessionsSnapshot.docs.map(doc => doc.data())

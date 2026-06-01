@@ -172,7 +172,7 @@ function AddClassModal({ isOpen, onClose, onSuccess, editingClass }) {
         time: timeStr,
         scheduleConfig: times,
         room,
-        pricePerSession: Number(pricePerSession),
+        pricePerSession: Number(String(pricePerSession).replace(/[^\d]/g, '')),
         students: students.length,
         studentList: students.filter(s => s.name.trim() !== ''),
       }
