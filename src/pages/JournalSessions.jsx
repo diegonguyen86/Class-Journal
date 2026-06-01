@@ -134,26 +134,42 @@ function GradeModal({ isOpen, onClose, studentName, onSave, savedDetails }) {
   )
 }
 
-function AddSessionModal({ isOpen, onClose, onSuccess, selectedClass }) {
+function AddSessionModal({ isOpen, onClose, onSuccess, selectedClass, editSession }) {
   const [sessionTitle, setSessionTitle] = useState('')
   const [dateTime, setDateTime] = useState('')
   
   const [attendance, setAttendance] = useState({})
   const [homework, setHomework] = useState({})
   
-  useEffect(() => {
-    if (selectedClass && selectedClass.studentList) {
-      setAttendance(selectedClass.studentList.reduce((acc, student) => ({...acc, [student.name]: 'present'}), {}))
-      setHomework(selectedClass.studentList.reduce((acc, student) => ({...acc, [student.name]: 'completed'}), {}))
-    }
-  }, [selectedClass])
-
   const [content, setContent] = useState('')
   const [observation, setObservation] = useState('')
   const [nextPlan, setNextPlan] = useState('')
+  const [assignedHomework, setAssignedHomework] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
+
+  useEffect(() => {
+    if (editSession) {
+      setSessionTitle(editSession.title || '')
+      setDateTime(editSession.date ? editSession.date.replace(' ', 'T') : '')
+      setAttendance(editSession.attendance || {})
+      setHomework(editSession.homework || {})
+      setContent(editSession.content || '')
+      setObservation(editSession.observation || '')
+      setNextPlan(editSession.nextPlan || '')
+      setAssignedHomework(editSession.assignedHomework || '')
+    } else if (selectedClass && selectedClass.studentList) {
+      setSessionTitle('')
+      setDateTime('')
+      setContent('')
+      setObservation('')
+      setNextPlan('')
+      setAssignedHomework('')
+      setAttendance(selectedClass.studentList.reduce((acc, student) => ({...acc, [student.name]: 'present'}), {}))
+      setHomework(selectedClass.studentList.reduce((acc, student) => ({...acc, [student.name]: 'completed'}), {}))
+    }
+  }, [selectedClass, editSession, isOpen])
 
   const handleAttendanceChange = (student, value) => {
     setAttendance(prev => ({ ...prev, [student]: value }))
@@ -170,7 +186,7 @@ function AddSessionModal({ isOpen, onClose, onSuccess, selectedClass }) {
     
     setIsSubmitting(true)
     try {
-      const newSession = {
+      const sessionData = {
         title: sessionTitle,
         date: dateTime.replace('T', ' '),
         attendance,
@@ -178,13 +194,21 @@ function AddSessionModal({ isOpen, onClose, onSuccess, selectedClass }) {
         content,
         observation,
         nextPlan,
-        createdAt: new Date().toISOString(),
+        assignedHomework,
         classId: selectedClass?.id
       }
       
-      const docRef = await addDoc(collection(db, 'journalSessions'), newSession)
-      
-      setSuccessMsg('Tạo Session thành công!')
+      let newSessionId = null;
+      if (editSession) {
+        await updateDoc(doc(db, 'journalSessions', editSession.id), sessionData)
+        setSuccessMsg('Cập nhật Session thành công!')
+        newSessionId = editSession.id
+      } else {
+        sessionData.createdAt = new Date().toISOString()
+        const docRef = await addDoc(collection(db, 'journalSessions'), sessionData)
+        setSuccessMsg('Tạo Session thành công!')
+        newSessionId = docRef.id
+      }
       
       setTimeout(() => {
         // Reset form
@@ -196,7 +220,7 @@ function AddSessionModal({ isOpen, onClose, onSuccess, selectedClass }) {
         setErrorMsg('')
         setSuccessMsg('')
         
-        if (onSuccess) onSuccess(docRef.id)
+        if (onSuccess) onSuccess(newSessionId)
         onClose()
       }, 1000)
     } catch (error) {
@@ -225,8 +249,8 @@ function AddSessionModal({ isOpen, onClose, onSuccess, selectedClass }) {
           <div className="absolute top-8 right-24 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[10px] border-b-primary rotate-45"></div>
           
           <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-3xl text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>add_circle</span>
-            <h2 className="text-2xl font-headline font-bold text-dark tracking-tight">Add New Session</h2>
+            <span className="material-symbols-outlined text-3xl text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>{editSession ? 'edit' : 'add_circle'}</span>
+            <h2 className="text-2xl font-headline font-bold text-dark tracking-tight">{editSession ? 'Edit Session' : 'Add New Session'}</h2>
           </div>
           
           <button onClick={onClose} className="p-2 hover:bg-dark/10 rounded-full transition-colors group">
@@ -365,6 +389,13 @@ function AddSessionModal({ isOpen, onClose, onSuccess, selectedClass }) {
               <label className="block font-label font-bold text-dark text-sm uppercase tracking-wider">Bài học buổi sau</label>
               <textarea value={nextPlan} onChange={(e) => setNextPlan(e.target.value)} className="w-full bg-white border-[2px] border-dark rounded-lg p-3 focus:outline-none focus:ring-0 focus:border-primary font-body text-dark resize-y min-h-[80px]" placeholder="Brief outline or goals for the next session..." rows="2"></textarea>
             </div>
+
+            {/* 7. Assigned Homework */}
+            <div className="space-y-2 bg-white/50 p-4 rounded-xl border-2 border-dark/20 relative">
+              <div className="absolute -left-2 -top-2 w-4 h-4 bg-secondary border-2 border-dark rotate-45"></div>
+              <label className="block font-label font-bold text-dark text-sm uppercase tracking-wider">Bài tập về nhà</label>
+              <textarea value={assignedHomework} onChange={(e) => setAssignedHomework(e.target.value)} className="w-full bg-white border-[2px] border-dark rounded-lg p-3 focus:outline-none focus:ring-0 focus:border-primary font-body text-dark resize-y min-h-[80px]" placeholder="Homework assigned to students..." rows="2"></textarea>
+            </div>
           </div>
         </div>
 
@@ -374,7 +405,7 @@ function AddSessionModal({ isOpen, onClose, onSuccess, selectedClass }) {
             Cancel
           </button>
           <button onClick={handleSubmit} disabled={isSubmitting} className={`w-full sm:w-auto px-8 py-3 rounded-lg border-[3px] border-dark bg-primary text-white font-headline font-bold text-lg shadow-memphis hover:bg-primary/90 active:translate-y-[4px] active:shadow-none transition-all flex items-center justify-center gap-2 group ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}>
-            {isSubmitting ? 'Creating...' : 'Create Session'}
+            {isSubmitting ? (editSession ? 'Updating...' : 'Creating...') : (editSession ? 'Update Session' : 'Create Session')}
             <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">{isSubmitting ? 'hourglass_empty' : 'arrow_forward'}</span>
           </button>
         </div>
@@ -493,22 +524,27 @@ function ShareModal({ isOpen, onClose, studentName, session, stats, avgGrade, pe
                  <div className="p-6 border-b-4 border-dark bg-secondary/10 relative">
                    <div className="absolute top-0 left-0 w-2 h-full bg-secondary"></div>
                    <h3 className="font-headline font-bold text-xl text-dark mb-3 flex items-center gap-2"><span className="material-symbols-outlined text-secondary">edit_note</span> NHẬN XÉT CÁ NHÂN</h3>
-                   <p className="font-body text-base text-dark whitespace-pre-wrap leading-relaxed break-all">{personalNote?.trim() || 'Chưa có nhận xét riêng cho học sinh này.'}</p>
+                   <p className="font-body text-base text-dark whitespace-pre-wrap leading-relaxed break-words">{personalNote?.trim() || 'Chưa có nhận xét riêng cho học sinh này.'}</p>
                  </div>
                  <div className="p-6 border-b-4 border-dark bg-white relative">
                    <div className="absolute top-0 left-0 w-2 h-full bg-primary"></div>
                    <h3 className="font-headline font-bold text-xl text-dark mb-3 flex items-center gap-2"><span className="material-symbols-outlined text-primary">menu_book</span> NỘI DUNG BUỔI HỌC</h3>
-                   <p className="font-body text-base text-dark whitespace-pre-wrap leading-relaxed break-all">{session?.content?.trim() || 'Chưa có nội dung.'}</p>
+                   <p className="font-body text-base text-dark whitespace-pre-wrap leading-relaxed break-words">{session?.content?.trim() || 'Chưa có nội dung.'}</p>
                  </div>
                  <div className="p-6 border-b-4 border-dark bg-white relative">
                    <div className="absolute top-0 left-0 w-2 h-full bg-accent"></div>
                    <h3 className="font-headline font-bold text-xl text-dark mb-3 flex items-center gap-2"><span className="material-symbols-outlined text-accent">visibility</span> NHẬN XÉT CHUNG TỪ GIÁO VIÊN</h3>
-                   <p className="font-body text-base text-dark whitespace-pre-wrap leading-relaxed break-all">{session?.observation?.trim() || 'Chưa có nhận xét.'}</p>
+                   <p className="font-body text-base text-dark whitespace-pre-wrap leading-relaxed break-words">{session?.observation?.trim() || 'Chưa có nhận xét.'}</p>
                  </div>
-                 <div className="p-6 bg-white relative">
+                 <div className="p-6 border-b-4 border-dark bg-white relative">
                    <div className="absolute top-0 left-0 w-2 h-full bg-danger"></div>
                    <h3 className="font-headline font-bold text-xl text-dark mb-3 flex items-center gap-2"><span className="material-symbols-outlined text-danger">event</span> KẾ HOẠCH BUỔI SAU</h3>
-                   <p className="font-body text-base text-dark whitespace-pre-wrap leading-relaxed break-all">{session?.nextPlan?.trim() || 'Chưa có kế hoạch.'}</p>
+                   <p className="font-body text-base text-dark whitespace-pre-wrap leading-relaxed break-words">{session?.nextPlan?.trim() || 'Chưa có kế hoạch.'}</p>
+                 </div>
+                 <div className="p-6 bg-white relative">
+                   <div className="absolute top-0 left-0 w-2 h-full bg-secondary"></div>
+                   <h3 className="font-headline font-bold text-xl text-dark mb-3 flex items-center gap-2"><span className="material-symbols-outlined text-secondary">assignment_turned_in</span> BÀI TẬP VỀ NHÀ</h3>
+                   <p className="font-body text-base text-dark whitespace-pre-wrap leading-relaxed break-words">{session?.assignedHomework?.trim() || 'Chưa có bài tập về nhà.'}</p>
                  </div>
              </div>
            </div>
@@ -528,6 +564,7 @@ export default function JournalSessions() {
 
   const [isGradeModalOpen, setIsGradeModalOpen] = useState(false)
   const [isAddSessionModalOpen, setIsAddSessionModalOpen] = useState(false)
+  const [sessionToEdit, setSessionToEdit] = useState(null)
   const [isShareModalOpen, setIsShareModalOpen] = useState(false)
   const [sessionsList, setSessionsList] = useState([])
   const [loading, setLoading] = useState(true)
@@ -753,6 +790,7 @@ export default function JournalSessions() {
                   showAlert('Vui lòng tạo hoặc chọn lớp học trước khi tạo Session!', 'warning')
                   return
                 }
+                setSessionToEdit(null)
                 setIsAddSessionModalOpen(true)
               }} className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center memphis-border hover:bg-dark transition-colors">
                 <span className="material-symbols-outlined text-sm">add</span>
@@ -764,10 +802,15 @@ export default function JournalSessions() {
                 <div key={s.id} onClick={() => setActiveSession(s)} className={`p-4 rounded-xl memphis-border cursor-pointer relative overflow-hidden group transition-all ${activeSession?.id === s.id ? 'bg-secondary shadow-memphis' : 'bg-white hover:shadow-memphis hover:-translate-y-1'}`}>
                   {activeSession?.id === s.id && <div className="absolute -right-4 -top-4 w-12 h-12 bg-white/20 rounded-full rotate-45"></div>}
                   <div className="flex justify-between items-start mb-2 relative z-10">
-                    <h3 className="flex-1 min-w-0 font-headline font-bold text-dark leading-tight pr-2 break-all">{s.title}</h3>
-                    <button onClick={(e) => handleDeleteSession(e, s.id)} className="w-6 h-6 rounded-md flex items-center justify-center text-dark/40 hover:text-danger hover:bg-danger/10 transition-colors shrink-0" title="Xoá Session">
-                      <span className="material-symbols-outlined text-[16px]">delete</span>
-                    </button>
+                    <h3 className="flex-1 min-w-0 font-headline font-bold text-dark leading-tight pr-2 break-words">{s.title}</h3>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button onClick={(e) => { e.stopPropagation(); setSessionToEdit(s); setIsAddSessionModalOpen(true); }} className="w-6 h-6 rounded-md flex items-center justify-center text-dark/40 hover:text-primary hover:bg-primary/10 transition-colors" title="Sửa Session">
+                        <span className="material-symbols-outlined text-[16px]">edit</span>
+                      </button>
+                      <button onClick={(e) => handleDeleteSession(e, s.id)} className="w-6 h-6 rounded-md flex items-center justify-center text-dark/40 hover:text-danger hover:bg-danger/10 transition-colors" title="Xoá Session">
+                        <span className="material-symbols-outlined text-[16px]">delete</span>
+                      </button>
+                    </div>
                   </div>
                   <div className="flex justify-between items-end mt-4 relative z-10">
                     <div className="font-label text-xs font-semibold text-dark/70 flex items-center gap-1">
@@ -863,7 +906,7 @@ export default function JournalSessions() {
                 </div>
 
                 <div className="relative">
-                  <textarea value={personalNote} onChange={e => setPersonalNote(e.target.value)} className="w-full h-24 p-3 bg-white border-2 border-dark rounded-xl font-body text-sm focus:ring-0 focus:border-primary resize-none break-all" placeholder={`Nhập nhận xét cá nhân cho ${activeStudent}...`}></textarea>
+                  <textarea value={personalNote} onChange={e => setPersonalNote(e.target.value)} className="w-full h-24 p-3 bg-white border-2 border-dark rounded-xl font-body text-sm focus:ring-0 focus:border-primary resize-none break-words" placeholder={`Nhập nhận xét cá nhân cho ${activeStudent}...`}></textarea>
                   <div className="flex items-center gap-3 mt-3">
                     <button 
                       onClick={() => setIsGradeModalOpen(true)}
@@ -881,7 +924,7 @@ export default function JournalSessions() {
             {/* Editor Area */}
             <div className="p-8 font-label text-lg text-dark leading-relaxed outline-none" style={{ backgroundImage: 'repeating-linear-gradient(transparent, transparent 31px, #C9B79C 31px, #C9B79C 32px)', lineHeight: '32px' }}>
               <h3 className="font-headline font-bold text-xl mb-4 bg-white inline-block px-2">Nội dung buổi học</h3>
-              <p className="mb-8 whitespace-pre-wrap break-all">{activeSession?.content || 'Chưa có nội dung.'}</p>
+              <p className="mb-8 whitespace-pre-wrap break-words">{activeSession?.content || 'Chưa có nội dung.'}</p>
               
               <h3 className="font-headline font-bold text-xl mb-4 bg-white inline-block px-2">Nhận xét buổi học</h3>
               <div className="bg-background p-4 rounded-xl memphis-border mb-8 relative overflow-hidden group">
@@ -889,11 +932,14 @@ export default function JournalSessions() {
                 <div className="font-headline font-bold text-primary mb-1 flex items-center gap-2 leading-none">
                   <span className="material-symbols-outlined text-[20px]">assignment</span> Nhận xét chung của buổi học
                 </div>
-                <p className="font-body text-sm text-dark mt-2 leading-normal whitespace-pre-wrap break-all">{activeSession?.observation || 'Chưa có nhận xét.'}</p>
+                <p className="font-body text-sm text-dark mt-2 leading-normal whitespace-pre-wrap break-words">{activeSession?.observation || 'Chưa có nhận xét.'}</p>
               </div>
 
               <h3 className="font-headline font-bold text-xl mb-4 bg-white inline-block px-2">Bài học buổi sau</h3>
-              <p className="mb-10 whitespace-pre-wrap break-all">{activeSession?.nextPlan || 'Chưa có kế hoạch.'}</p>
+              <p className="mb-10 whitespace-pre-wrap break-words">{activeSession?.nextPlan || 'Chưa có kế hoạch.'}</p>
+
+              <h3 className="font-headline font-bold text-xl mb-4 bg-white inline-block px-2">Bài tập về nhà</h3>
+              <p className="mb-10 whitespace-pre-wrap break-words">{activeSession?.assignedHomework || 'Chưa có bài tập về nhà.'}</p>
 
               <div className="flex justify-center border-t-2 border-dark/20 pt-8 mt-4 bg-white mx-[-32px] px-8 mb-[-32px] pb-8">
                 <button onClick={handleShareImage} className="bg-accent text-white px-8 py-3 rounded-xl font-headline font-bold text-lg memphis-border hover:-translate-y-1 hover:shadow-memphis transition-all flex items-center justify-center gap-3 w-full sm:w-auto">
@@ -913,7 +959,16 @@ export default function JournalSessions() {
         onSave={handleSaveGrade}
         savedDetails={activeStudentGradeData?.details}
       />
-      <AddSessionModal isOpen={isAddSessionModalOpen} onClose={() => setIsAddSessionModalOpen(false)} onSuccess={fetchData} selectedClass={selectedClass} />
+      <AddSessionModal 
+        isOpen={isAddSessionModalOpen} 
+        onClose={() => {
+          setIsAddSessionModalOpen(false)
+          setSessionToEdit(null)
+        }} 
+        onSuccess={fetchData} 
+        selectedClass={selectedClass} 
+        editSession={sessionToEdit}
+      />
 
       <ShareModal 
         isOpen={isShareModalOpen} 
