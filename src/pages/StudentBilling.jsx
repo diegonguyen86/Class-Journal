@@ -231,8 +231,8 @@ export default function StudentBilling() {
                 const duration = Number(session.actualDuration) || 1.5
                 totalHours += duration
                 
-                const sessionPrice = Number(session.snapshotPrice) || price
-                const sessionCost = duration * sessionPrice
+                const sessionPrice = Number(session.snapshotPrice) || price || 0
+                const sessionCost = (duration * sessionPrice) || 0
                 totalAmountDue += sessionCost
 
                 sessionDetails.push({
@@ -245,7 +245,7 @@ export default function StudentBilling() {
               }
             })
 
-            const amount = totalAmountDue
+            const amount = totalAmountDue || 0
             generatedBills.push({
               id: idCounter++,
               name: student.name,

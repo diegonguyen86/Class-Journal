@@ -192,7 +192,7 @@ function AddSessionModal({ isOpen, onClose, onSuccess, selectedClass, editSessio
       const sessionData = {
         title: sessionTitle,
         date: dateTime.replace('T', ' '),
-        actualDuration: Number(actualDuration),
+        actualDuration: Number(String(actualDuration).replace(',', '.')) || 1.5,
         attendance,
         homework,
         content,

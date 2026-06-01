@@ -157,6 +157,12 @@ function AddClassModal({ isOpen, onClose, onSuccess, editingClass }) {
     if (!className) return setErrorMsg('Class Name is required')
     if (schedule.length === 0) return setErrorMsg('Please select at least one day')
     
+    const cleanedNames = students.map(s => s.name.trim()).filter(n => n !== '')
+    const uniqueNames = new Set(cleanedNames)
+    if (cleanedNames.length !== uniqueNames.size) {
+      return setErrorMsg('Phát hiện học sinh trùng tên! Vui lòng thêm ký hiệu (ví dụ: số 1, 2) vào sau tên để phân biệt.')
+    }
+    
     setIsSubmitting(true)
     try {
       const timeStr = schedule.length > 0 
@@ -174,7 +180,7 @@ function AddClassModal({ isOpen, onClose, onSuccess, editingClass }) {
         room,
         pricePerSession: Number(String(pricePerSession).replace(/[^\d]/g, '')),
         students: students.length,
-        studentList: students.filter(s => s.name.trim() !== ''),
+        studentList: students.filter(s => s.name.trim() !== '').map(s => ({ ...s, name: s.name.trim() })),
       }
       
       if (editingClass) {
