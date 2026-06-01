@@ -56,85 +56,89 @@ function BillingDetailsModal({ isOpen, onClose, studentData, onRecordPayment }) 
           </button>
         </div>
         
-        <div className="p-6 overflow-y-auto flex-1 bg-[#F8F4EC] flex flex-col md:flex-row gap-6">
+        <div className="p-6 overflow-y-auto flex-1 bg-[#F8F4EC]">
           {/* Bill Content for Export */}
-          <div className="flex-1" ref={billRef}>
-            <div className="bg-white rounded-xl memphis-border p-5 mb-6">
-              <div className="flex justify-between items-center mb-4 border-b-2 border-dark/10 pb-4">
-                <div>
-                  <p className="font-label text-sm text-dark/70 font-bold">Lớp học</p>
-                  <p className="font-headline text-xl font-bold">{studentData.class}</p>
+          <div ref={billRef} className="flex flex-col md:flex-row gap-6 bg-[#F8F4EC] pb-4">
+            <div className="flex-1">
+              <div className="bg-white rounded-xl memphis-border p-5 mb-6">
+                <div className="flex justify-between items-center mb-4 border-b-2 border-dark/10 pb-4">
+                  <div>
+                    <p className="font-label text-sm text-dark/70 font-bold">Lớp học</p>
+                    <p className="font-headline text-xl font-bold">{studentData.class}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-label text-sm text-dark/70 font-bold">Tổng số tiền</p>
+                    <p className="font-headline text-2xl font-bold text-primary">{studentData.amount}</p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-label text-sm text-dark/70 font-bold">Tổng số tiền</p>
-                  <p className="font-headline text-2xl font-bold text-primary">{studentData.amount}</p>
+                <div className="flex gap-6">
+                  <div>
+                    <p className="font-label text-xs text-dark/70 font-bold">Số buổi đã học</p>
+                    <p className="font-body font-bold">{studentData.attendedCount} buổi</p>
+                  </div>
+                  <div>
+                    <p className="font-label text-xs text-dark/70 font-bold">Tổng thời gian</p>
+                    <p className="font-body font-bold">{studentData.totalHours} giờ</p>
+                  </div>
                 </div>
               </div>
-              <div className="flex gap-6">
-                <div>
-                  <p className="font-label text-xs text-dark/70 font-bold">Số buổi đã học</p>
-                  <p className="font-body font-bold">{studentData.attendedCount} buổi</p>
-                </div>
-                <div>
-                  <p className="font-label text-xs text-dark/70 font-bold">Tổng thời gian</p>
-                  <p className="font-body font-bold">{studentData.totalHours} giờ</p>
-                </div>
+
+              <h3 className="font-headline font-bold text-lg mb-4">Danh sách buổi học</h3>
+              <div className="space-y-3">
+                {studentData.sessionDetails?.map((session, index) => (
+                  <div key={index} className="bg-white p-4 rounded-lg border-2 border-dark flex justify-between items-center shadow-[2px_2px_0_0_#2F2F2F]">
+                    <div>
+                      <h4 className="font-bold text-dark">{session.title}</h4>
+                      <p className="text-xs font-label text-dark/60 mt-1">{session.date}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-primary">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(session.cost)}</p>
+                      <p className="text-xs font-label text-dark/60 mt-1">{session.duration} giờ</p>
+                    </div>
+                  </div>
+                ))}
+                {(!studentData.sessionDetails || studentData.sessionDetails.length === 0) && (
+                  <p className="text-center font-label text-dark/50 py-4">Chưa có dữ liệu buổi học</p>
+                )}
               </div>
             </div>
 
-            <h3 className="font-headline font-bold text-lg mb-4">Danh sách buổi học</h3>
-            <div className="space-y-3">
-              {studentData.sessionDetails?.map((session, index) => (
-                <div key={index} className="bg-white p-4 rounded-lg border-2 border-dark flex justify-between items-center shadow-[2px_2px_0_0_#2F2F2F]">
-                  <div>
-                    <h4 className="font-bold text-dark">{session.title}</h4>
-                    <p className="text-xs font-label text-dark/60 mt-1">{session.date}</p>
+            {/* QR Code Content */}
+            <div className="w-full md:w-80 shrink-0">
+              <div className="bg-white rounded-xl memphis-border p-5 text-center shadow-memphis flex flex-col items-center">
+                <h3 className="font-headline font-bold text-lg mb-2 text-dark">Quét mã thanh toán</h3>
+                {amount > 0 ? (
+                  <>
+                    <div className="border-4 border-dark rounded-xl overflow-hidden mb-3 p-2 bg-white">
+                      <img src={qrUrl} alt="VietQR" className="w-full h-auto" crossOrigin="anonymous" />
+                    </div>
+                    <p className="text-xs font-label text-dark/70 mb-1">Ngân hàng: <strong>{bankId.toUpperCase()}</strong></p>
+                    <p className="text-xs font-label text-dark/70 mb-1">STK: <strong>{bankAccount}</strong></p>
+                    <p className="text-xs font-label text-dark/70 mb-3">Tên: <strong>{bankName}</strong></p>
+                  </>
+                ) : (
+                  <div className="w-full h-48 bg-dark/5 border-2 border-dashed border-dark/20 rounded-xl flex items-center justify-center">
+                    <p className="text-dark/50 font-label text-sm">Chưa có hóa đơn</p>
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold text-primary">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(session.cost)}</p>
-                    <p className="text-xs font-label text-dark/60 mt-1">{session.duration} giờ</p>
-                  </div>
-                </div>
-              ))}
-              {(!studentData.sessionDetails || studentData.sessionDetails.length === 0) && (
-                <p className="text-center font-label text-dark/50 py-4">Chưa có dữ liệu buổi học</p>
-              )}
+                )}
+              </div>
             </div>
           </div>
 
-          {/* QR Code and Actions */}
-          <div className="w-full md:w-80 flex flex-col gap-4 shrink-0">
-            <div className="bg-white rounded-xl memphis-border p-5 text-center shadow-memphis flex flex-col items-center">
-              <h3 className="font-headline font-bold text-lg mb-2 text-dark">Quét mã thanh toán</h3>
-              {amount > 0 ? (
-                <>
-                  <div className="border-4 border-dark rounded-xl overflow-hidden mb-3 p-2 bg-white">
-                    <img src={qrUrl} alt="VietQR" className="w-full h-auto" crossOrigin="anonymous" />
-                  </div>
-                  <p className="text-xs font-label text-dark/70 mb-1">Ngân hàng: <strong>{bankId.toUpperCase()}</strong></p>
-                  <p className="text-xs font-label text-dark/70 mb-1">STK: <strong>{bankAccount}</strong></p>
-                  <p className="text-xs font-label text-dark/70 mb-3">Tên: <strong>{bankName}</strong></p>
-                </>
-              ) : (
-                <div className="w-full h-48 bg-dark/5 border-2 border-dashed border-dark/20 rounded-xl flex items-center justify-center">
-                  <p className="text-dark/50 font-label text-sm">Chưa có hóa đơn</p>
-                </div>
-              )}
-              
-              <button 
-                onClick={handleShareZalo} 
-                disabled={isExporting || amount === 0}
-                className="w-full bg-accent text-white px-4 py-3 rounded-lg font-headline font-bold border-2 border-dark shadow-memphis-sm hover:-translate-y-1 transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-50 disabled:hover:translate-y-0"
-              >
-                {isExporting ? <span className="material-symbols-outlined animate-spin">sync</span> : <span className="material-symbols-outlined">download</span>}
-                Tải Bill & Gửi Zalo
-              </button>
-            </div>
-            
+          {/* Action Buttons (Outside billRef) */}
+          <div className="mt-2 pt-6 border-t-2 border-dark/10 flex flex-col sm:flex-row justify-end gap-4">
+            <button 
+              onClick={handleShareZalo} 
+              disabled={isExporting || amount === 0}
+              className="w-full sm:w-auto bg-accent text-white px-6 py-3 rounded-xl font-headline font-bold border-2 border-dark shadow-memphis-sm hover:-translate-y-1 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:translate-y-0"
+            >
+              {isExporting ? <span className="material-symbols-outlined animate-spin">sync</span> : <span className="material-symbols-outlined">download</span>}
+              Tải Bill & Gửi Zalo
+            </button>
             <button 
               onClick={() => onRecordPayment(studentData)}
               disabled={amount === 0}
-              className="w-full bg-primary text-white px-4 py-4 rounded-xl font-headline font-bold text-lg border-2 border-dark shadow-memphis-sm hover:-translate-y-1 hover:shadow-memphis transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-memphis-sm"
+              className="w-full sm:w-auto bg-primary text-white px-6 py-3 rounded-xl font-headline font-bold text-lg border-2 border-dark shadow-memphis-sm hover:-translate-y-1 hover:shadow-memphis transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-memphis-sm"
             >
               <span className="material-symbols-outlined">task_alt</span>
               Xác nhận đã thu
