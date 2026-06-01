@@ -58,69 +58,98 @@ function BillingDetailsModal({ isOpen, onClose, studentData, onRecordPayment }) 
         
         <div className="p-6 overflow-y-auto flex-1 bg-[#F8F4EC]">
           {/* Bill Content for Export */}
-          <div ref={billRef} className="flex flex-col md:flex-row gap-6 bg-[#F8F4EC] pb-4">
-            <div className="flex-1">
-              <div className="bg-white rounded-xl memphis-border p-5 mb-6">
-                <div className="flex justify-between items-center mb-4 border-b-2 border-dark/10 pb-4">
-                  <div>
-                    <p className="font-label text-sm text-dark/70 font-bold">Lớp học</p>
-                    <p className="font-headline text-xl font-bold">{studentData.class}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-label text-sm text-dark/70 font-bold">Tổng số tiền</p>
-                    <p className="font-headline text-2xl font-bold text-primary">{studentData.amount}</p>
-                  </div>
-                </div>
-                <div className="flex gap-6">
-                  <div>
-                    <p className="font-label text-xs text-dark/70 font-bold">Số buổi đã học</p>
-                    <p className="font-body font-bold">{studentData.attendedCount} buổi</p>
-                  </div>
-                  <div>
-                    <p className="font-label text-xs text-dark/70 font-bold">Tổng thời gian</p>
-                    <p className="font-body font-bold">{studentData.totalHours} giờ</p>
-                  </div>
-                </div>
+          <div ref={billRef} className="bg-white p-8 md:p-10 flex flex-col gap-8 mx-auto w-full max-w-[800px] relative overflow-hidden">
+            {/* Background Pattern/Deco */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+            
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end border-b-2 border-dark/10 pb-6 relative z-10">
+              <div>
+                <h2 className="text-3xl font-headline font-black uppercase text-primary tracking-tight">Hóa Đơn Học Phí</h2>
+                <p className="font-label text-dark/70 mt-1 font-bold text-lg">{studentData.name}</p>
               </div>
-
-              <h3 className="font-headline font-bold text-lg mb-4">Danh sách buổi học</h3>
-              <div className="space-y-3">
-                {studentData.sessionDetails?.map((session, index) => (
-                  <div key={index} className="bg-white p-4 rounded-lg border-2 border-dark flex justify-between items-center shadow-[2px_2px_0_0_#2F2F2F]">
-                    <div>
-                      <h4 className="font-bold text-dark">{session.title}</h4>
-                      <p className="text-xs font-label text-dark/60 mt-1">{session.date}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-primary">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(session.cost)}</p>
-                      <p className="text-xs font-label text-dark/60 mt-1">{session.duration} giờ</p>
-                    </div>
-                  </div>
-                ))}
-                {(!studentData.sessionDetails || studentData.sessionDetails.length === 0) && (
-                  <p className="text-center font-label text-dark/50 py-4">Chưa có dữ liệu buổi học</p>
-                )}
+              <div className="text-left sm:text-right mt-4 sm:mt-0">
+                <p className="font-label text-sm text-dark/60 uppercase tracking-wider font-bold mb-1">Ngày lập</p>
+                <p className="font-headline font-bold text-lg">{new Date().toLocaleDateString('vi-VN')}</p>
               </div>
             </div>
 
-            {/* QR Code Content */}
-            <div className="w-full md:w-80 shrink-0">
-              <div className="bg-white rounded-xl memphis-border p-5 text-center shadow-memphis flex flex-col items-center">
-                <h3 className="font-headline font-bold text-lg mb-2 text-dark">Quét mã thanh toán</h3>
-                {amount > 0 ? (
-                  <>
-                    <div className="border-4 border-dark rounded-xl overflow-hidden mb-3 p-2 bg-white">
-                      <img src={qrUrl} alt="VietQR" className="w-full h-auto" crossOrigin="anonymous" />
-                    </div>
-                    <p className="text-xs font-label text-dark/70 mb-1">Ngân hàng: <strong>{bankId.toUpperCase()}</strong></p>
-                    <p className="text-xs font-label text-dark/70 mb-1">STK: <strong>{bankAccount}</strong></p>
-                    <p className="text-xs font-label text-dark/70 mb-3">Tên: <strong>{bankName}</strong></p>
-                  </>
-                ) : (
-                  <div className="w-full h-48 bg-dark/5 border-2 border-dashed border-dark/20 rounded-xl flex items-center justify-center">
-                    <p className="text-dark/50 font-label text-sm">Chưa có hóa đơn</p>
+            <div className="flex flex-col md:flex-row gap-10 relative z-10">
+              {/* Left Column: Details */}
+              <div className="flex-1 flex flex-col gap-8">
+                <div className="bg-secondary/10 p-5 rounded-xl border border-secondary/20 flex flex-col sm:flex-row justify-between gap-4">
+                  <div>
+                    <p className="font-label text-xs text-dark/60 font-bold uppercase mb-1">Lớp học</p>
+                    <p className="font-headline text-xl font-bold">{studentData.class}</p>
                   </div>
-                )}
+                  <div>
+                    <p className="font-label text-xs text-dark/60 font-bold uppercase mb-1">Số buổi / Giờ</p>
+                    <p className="font-headline text-xl font-bold">{studentData.attendedCount} <span className="text-sm font-normal">buổi</span> / {studentData.totalHours}<span className="text-sm font-normal">h</span></p>
+                  </div>
+                  <div className="sm:text-right">
+                    <p className="font-label text-xs text-primary/80 font-bold uppercase mb-1">Tổng cộng</p>
+                    <p className="font-headline text-2xl font-bold text-primary">{studentData.amount}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-headline font-bold text-lg mb-3">Chi tiết buổi học</h3>
+                  <div className="space-y-0 border-t border-dark/10">
+                    {studentData.sessionDetails?.map((session, index) => (
+                      <div key={index} className="flex justify-between items-center py-3 border-b border-dark/10">
+                        <div>
+                          <h4 className="font-bold text-dark">{session.title}</h4>
+                          <p className="text-xs font-label text-dark/60 mt-0.5">{session.date}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-dark">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(session.cost)}</p>
+                          <p className="text-xs font-label text-dark/50 mt-0.5">{session.duration} giờ</p>
+                        </div>
+                      </div>
+                    ))}
+                    {(!studentData.sessionDetails || studentData.sessionDetails.length === 0) && (
+                      <p className="text-center font-label text-dark/50 py-4 text-sm">Chưa có dữ liệu buổi học</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: QR Code */}
+              <div className="w-full md:w-72 shrink-0 flex flex-col items-center">
+                <div className="bg-white p-6 rounded-2xl border-2 border-dark/10 shadow-sm flex flex-col items-center w-full">
+                  <h3 className="font-headline font-bold text-sm mb-4 text-dark uppercase tracking-wider text-center">Quét để thanh toán</h3>
+                  {amount > 0 ? (
+                    <>
+                      <div className="w-full aspect-square bg-white rounded-xl overflow-hidden mb-5">
+                        <img src={qrUrl} alt="VietQR" className="w-full h-full object-contain mix-blend-multiply" crossOrigin="anonymous" />
+                      </div>
+                      <div className="w-full text-center space-y-2">
+                        <div>
+                          <p className="text-[10px] font-label text-dark/50 uppercase tracking-widest mb-0.5">Ngân hàng</p>
+                          <p className="text-sm font-bold text-dark">{bankId.toUpperCase()}</p>
+                        </div>
+                        
+                        <div className="w-12 h-px bg-dark/10 mx-auto my-2"></div>
+                        
+                        <div>
+                          <p className="text-[10px] font-label text-dark/50 uppercase tracking-widest mb-0.5">Số tài khoản</p>
+                          <p className="text-base font-bold text-dark tracking-wider">{bankAccount}</p>
+                        </div>
+                        
+                        <div className="w-12 h-px bg-dark/10 mx-auto my-2"></div>
+                        
+                        <div>
+                          <p className="text-[10px] font-label text-dark/50 uppercase tracking-widest mb-0.5">Chủ tài khoản</p>
+                          <p className="text-sm font-bold text-dark">{bankName}</p>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="w-full aspect-square bg-dark/5 rounded-xl flex items-center justify-center">
+                      <p className="text-dark/50 font-label text-xs">Chưa có hóa đơn</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
