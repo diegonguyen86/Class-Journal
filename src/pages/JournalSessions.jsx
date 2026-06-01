@@ -199,7 +199,8 @@ function AddSessionModal({ isOpen, onClose, onSuccess, selectedClass, editSessio
         observation,
         nextPlan,
         assignedHomework,
-        classId: selectedClass?.id
+        classId: selectedClass?.id,
+        snapshotPrice: Number(selectedClass?.pricePerSession || 0)
       }
       
       let newSessionId = null;

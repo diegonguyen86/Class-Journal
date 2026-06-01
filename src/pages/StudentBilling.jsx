@@ -1,14 +1,54 @@
+import { useState, useEffect, useRef } from 'react'
+import { collection, getDocs, addDoc } from 'firebase/firestore'
+import { db } from '../firebase'
 import TopNavBar from '../components/TopNavBar'
+import html2canvas from 'html2canvas'
 
+function BillingDetailsModal({ isOpen, onClose, studentData, onRecordPayment }) {
+  const billRef = useRef(null)
+  const [isExporting, setIsExporting] = useState(false)
 
-
-function BillingDetailsModal({ isOpen, onClose, studentData }) {
   if (!isOpen || !studentData) return null
+
+  const bankId = import.meta.env.VITE_BANK_ID || 'tpbank'
+  const bankAccount = import.meta.env.VITE_BANK_ACCOUNT || '00000723594'
+  const bankName = import.meta.env.VITE_BANK_ACCOUNT_NAME || 'PHAN ANH THU'
+  const amount = studentData.rawAmount || 0
+  const addInfo = encodeURIComponent(`Thanh toan hoc phi ${studentData.name}`)
+  const qrUrl = `https://img.vietqr.io/image/${bankId}-${bankAccount}-compact2.png?amount=${amount}&addInfo=${addInfo}&accountName=${encodeURIComponent(bankName)}`
+
+  const handleShareZalo = async () => {
+    if (!billRef.current) return
+    setIsExporting(true)
+    try {
+      const canvas = await html2canvas(billRef.current, { 
+        scale: 2, 
+        backgroundColor: '#ffffff',
+        useCORS: true
+      })
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `Hoa_Don_${studentData.name.replace(/\s+/g, '_')}.png`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      
+      // Open Zalo web share or Zalo me (since we can't deep link an image directly, just open zalo)
+      window.open(`https://chat.zalo.me/`, '_blank')
+    } catch (error) {
+      console.error('Error generating image:', error)
+    } finally {
+      setIsExporting(false)
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-dark/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white w-full max-w-2xl rounded-2xl memphis-border-thick shadow-memphis-lg flex flex-col max-h-[85vh] animate-[slideUp_0.2s_ease-out]">
+      <div className="relative bg-white w-full max-w-4xl rounded-2xl memphis-border-thick shadow-memphis-lg flex flex-col max-h-[90vh] animate-[slideUp_0.2s_ease-out]">
         <div className="p-6 border-b-2 border-dark flex justify-between items-center bg-secondary/30">
           <h2 className="font-headline font-bold text-2xl">Chi tiết học phí: {studentData.name}</h2>
           <button onClick={onClose} className="w-8 h-8 rounded-full border-2 border-dark flex items-center justify-center hover:bg-dark hover:text-white transition-colors">
@@ -16,57 +56,95 @@ function BillingDetailsModal({ isOpen, onClose, studentData }) {
           </button>
         </div>
         
-        <div className="p-6 overflow-y-auto flex-1 bg-[#F8F4EC]">
-          <div className="bg-white rounded-xl memphis-border p-5 mb-6">
-            <div className="flex justify-between items-center mb-4 border-b-2 border-dark/10 pb-4">
-              <div>
-                <p className="font-label text-sm text-dark/70 font-bold">Lớp học</p>
-                <p className="font-headline text-xl font-bold">{studentData.class}</p>
+        <div className="p-6 overflow-y-auto flex-1 bg-[#F8F4EC] flex flex-col md:flex-row gap-6">
+          {/* Bill Content for Export */}
+          <div className="flex-1" ref={billRef}>
+            <div className="bg-white rounded-xl memphis-border p-5 mb-6">
+              <div className="flex justify-between items-center mb-4 border-b-2 border-dark/10 pb-4">
+                <div>
+                  <p className="font-label text-sm text-dark/70 font-bold">Lớp học</p>
+                  <p className="font-headline text-xl font-bold">{studentData.class}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-label text-sm text-dark/70 font-bold">Tổng số tiền</p>
+                  <p className="font-headline text-2xl font-bold text-primary">{studentData.amount}</p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="font-label text-sm text-dark/70 font-bold">Tổng số tiền</p>
-                <p className="font-headline text-2xl font-bold text-primary">{studentData.amount}</p>
+              <div className="flex gap-6">
+                <div>
+                  <p className="font-label text-xs text-dark/70 font-bold">Số buổi đã học</p>
+                  <p className="font-body font-bold">{studentData.attendedCount} buổi</p>
+                </div>
+                <div>
+                  <p className="font-label text-xs text-dark/70 font-bold">Tổng thời gian</p>
+                  <p className="font-body font-bold">{studentData.totalHours} giờ</p>
+                </div>
               </div>
             </div>
-            <div className="flex gap-6">
-              <div>
-                <p className="font-label text-xs text-dark/70 font-bold">Số buổi đã học</p>
-                <p className="font-body font-bold">{studentData.attendedCount} buổi</p>
-              </div>
-              <div>
-                <p className="font-label text-xs text-dark/70 font-bold">Tổng thời gian</p>
-                <p className="font-body font-bold">{studentData.totalHours} giờ</p>
-              </div>
+
+            <h3 className="font-headline font-bold text-lg mb-4">Danh sách buổi học</h3>
+            <div className="space-y-3">
+              {studentData.sessionDetails?.map((session, index) => (
+                <div key={index} className="bg-white p-4 rounded-lg border-2 border-dark flex justify-between items-center shadow-[2px_2px_0_0_#2F2F2F]">
+                  <div>
+                    <h4 className="font-bold text-dark">{session.title}</h4>
+                    <p className="text-xs font-label text-dark/60 mt-1">{session.date}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-primary">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(session.cost)}</p>
+                    <p className="text-xs font-label text-dark/60 mt-1">{session.duration} giờ</p>
+                  </div>
+                </div>
+              ))}
+              {(!studentData.sessionDetails || studentData.sessionDetails.length === 0) && (
+                <p className="text-center font-label text-dark/50 py-4">Chưa có dữ liệu buổi học</p>
+              )}
             </div>
           </div>
 
-          <h3 className="font-headline font-bold text-lg mb-4">Danh sách buổi học</h3>
-          <div className="space-y-3">
-            {studentData.sessionDetails?.map((session, index) => (
-              <div key={index} className="bg-white p-4 rounded-lg border-2 border-dark flex justify-between items-center shadow-[2px_2px_0_0_#2F2F2F]">
-                <div>
-                  <h4 className="font-bold text-dark">{session.title}</h4>
-                  <p className="text-xs font-label text-dark/60 mt-1">{session.date}</p>
+          {/* QR Code and Actions */}
+          <div className="w-full md:w-80 flex flex-col gap-4 shrink-0">
+            <div className="bg-white rounded-xl memphis-border p-5 text-center shadow-memphis flex flex-col items-center">
+              <h3 className="font-headline font-bold text-lg mb-2 text-dark">Quét mã thanh toán</h3>
+              {amount > 0 ? (
+                <>
+                  <div className="border-4 border-dark rounded-xl overflow-hidden mb-3 p-2 bg-white">
+                    <img src={qrUrl} alt="VietQR" className="w-full h-auto" crossOrigin="anonymous" />
+                  </div>
+                  <p className="text-xs font-label text-dark/70 mb-1">Ngân hàng: <strong>{bankId.toUpperCase()}</strong></p>
+                  <p className="text-xs font-label text-dark/70 mb-1">STK: <strong>{bankAccount}</strong></p>
+                  <p className="text-xs font-label text-dark/70 mb-3">Tên: <strong>{bankName}</strong></p>
+                </>
+              ) : (
+                <div className="w-full h-48 bg-dark/5 border-2 border-dashed border-dark/20 rounded-xl flex items-center justify-center">
+                  <p className="text-dark/50 font-label text-sm">Chưa có hóa đơn</p>
                 </div>
-                <div className="text-right">
-                  <p className="font-bold text-primary">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(session.cost)}</p>
-                  <p className="text-xs font-label text-dark/60 mt-1">{session.duration} giờ</p>
-                </div>
-              </div>
-            ))}
-            {(!studentData.sessionDetails || studentData.sessionDetails.length === 0) && (
-              <p className="text-center font-label text-dark/50 py-4">Chưa có dữ liệu buổi học</p>
-            )}
+              )}
+              
+              <button 
+                onClick={handleShareZalo} 
+                disabled={isExporting || amount === 0}
+                className="w-full bg-accent text-white px-4 py-3 rounded-lg font-headline font-bold border-2 border-dark shadow-memphis-sm hover:-translate-y-1 transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-50 disabled:hover:translate-y-0"
+              >
+                {isExporting ? <span className="material-symbols-outlined animate-spin">sync</span> : <span className="material-symbols-outlined">download</span>}
+                Tải Bill & Gửi Zalo
+              </button>
+            </div>
+            
+            <button 
+              onClick={() => onRecordPayment(studentData)}
+              disabled={amount === 0}
+              className="w-full bg-primary text-white px-4 py-4 rounded-xl font-headline font-bold text-lg border-2 border-dark shadow-memphis-sm hover:-translate-y-1 hover:shadow-memphis transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-memphis-sm"
+            >
+              <span className="material-symbols-outlined">task_alt</span>
+              Xác nhận đã thu
+            </button>
           </div>
         </div>
       </div>
     </div>
   )
 }
-
-import { useState, useEffect } from 'react'
-import { collection, getDocs } from 'firebase/firestore'
-import { db } from '../firebase'
 
 export default function StudentBilling() {
   const [selectedStudent, setSelectedStudent] = useState(null)
@@ -75,15 +153,20 @@ export default function StudentBilling() {
   const [loading, setLoading] = useState(true)
   const [classesList, setClassesList] = useState([])
   const [selectedClassFilter, setSelectedClassFilter] = useState('')
+  const [refreshCount, setRefreshCount] = useState(0)
 
   useEffect(() => {
     const fetchBillingData = async () => {
       try {
         const classesSnapshot = await getDocs(collection(db, 'classes'))
         const sessionsSnapshot = await getDocs(collection(db, 'journalSessions'))
+        const invoicesSnapshot = await getDocs(collection(db, 'invoices'))
         
         const classesData = classesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-        const sessionsData = sessionsSnapshot.docs.map(doc => doc.data())
+        const sessionsData = sessionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+        const invoicesData = invoicesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+        
+        setRecentPayments(invoicesData.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)))
         
         setClassesList(classesData.map(c => c.name))
 
@@ -99,8 +182,15 @@ export default function StudentBilling() {
             let attendedCount = 0
             let totalHours = 0
             let sessionDetails = []
+            let totalAmountDue = 0
+
+            const paidSessionIds = invoicesData
+              .filter(inv => inv.studentName === student.name && inv.classId === cls.id)
+              .flatMap(inv => inv.sessionIds || [])
 
             classSessions.forEach(session => {
+              if (paidSessionIds.includes(session.id)) return // Bỏ qua các buổi đã thanh toán
+
               // Assume present if no attendance recorded or if marked present/late
               const att = session.attendance ? session.attendance[student.name] : 'present'
               if (att !== 'absent' && att !== 'excused') {
@@ -108,8 +198,12 @@ export default function StudentBilling() {
                 const duration = Number(session.actualDuration) || 1.5
                 totalHours += duration
                 
-                const sessionCost = duration * price
+                const sessionPrice = Number(session.snapshotPrice) || price
+                const sessionCost = duration * sessionPrice
+                totalAmountDue += sessionCost
+
                 sessionDetails.push({
+                  id: session.id, // Save session ID for later tracking
                   title: session.title || 'Untitled Session',
                   date: session.date || 'Unknown Date',
                   duration,
@@ -118,11 +212,12 @@ export default function StudentBilling() {
               }
             })
 
-            const amount = totalHours * price
+            const amount = totalAmountDue
             generatedBills.push({
               id: idCounter++,
               name: student.name,
               class: cls.name,
+              classId: cls.id,
               amount: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount),
               rawAmount: amount,
               status: attendedCount > 0 ? 'Pending' : 'No Sessions',
@@ -148,7 +243,31 @@ export default function StudentBilling() {
       }
     }
     fetchBillingData()
-  }, [])
+  }, [refreshCount])
+
+  const handleRecordPayment = async (studentData) => {
+    try {
+      const paymentRecord = {
+        studentName: studentData.name,
+        classId: studentData.classId,
+        className: studentData.class,
+        amount: studentData.amount, // Formatted string
+        rawAmount: studentData.rawAmount,
+        sessionIds: studentData.sessionDetails.map(s => s.id),
+        date: new Date().toLocaleDateString('vi-VN'),
+        createdAt: new Date().toISOString(),
+        method: "VietQR / Chuyển khoản",
+        desc: `Thanh toán học phí ${studentData.name}`
+      }
+      await addDoc(collection(db, 'invoices'), paymentRecord)
+      
+      setSelectedStudent(null)
+      setRefreshCount(prev => prev + 1)
+    } catch (e) {
+      console.error('Error saving payment record', e)
+      alert('Có lỗi xảy ra khi xác nhận thu tiền. Vui lòng thử lại.')
+    }
+  }
 
   if (loading) return <div className="flex min-h-screen items-center justify-center font-headline text-2xl text-dark">Loading Billing...</div>
 
@@ -297,7 +416,12 @@ export default function StudentBilling() {
           </section>
         </div>
       </main>
-      <BillingDetailsModal isOpen={!!selectedStudent} onClose={() => setSelectedStudent(null)} studentData={selectedStudent} />
+      <BillingDetailsModal 
+        isOpen={!!selectedStudent} 
+        onClose={() => setSelectedStudent(null)} 
+        studentData={selectedStudent} 
+        onRecordPayment={handleRecordPayment}
+      />
     </div>
   )
 }
