@@ -3,21 +3,13 @@ import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore'
 import { db } from '../firebase'
 import TopNavBar from '../components/TopNavBar'
 import { Link } from 'react-router-dom'
+import WeeklyCalendar from '../components/WeeklyCalendar'
 
 export default function Dashboard() {
   const [stats, setStats] = useState([])
   const [attentionStudents, setAttentionStudents] = useState([])
+  const [classesList, setClassesList] = useState([])
   const [loading, setLoading] = useState(true)
-
-  const [calendarId, setCalendarId] = useState(() => localStorage.getItem('class_journal_calendar_id') || '')
-  const [isEditingCalendar, setIsEditingCalendar] = useState(false)
-  const [tempCalendarId, setTempCalendarId] = useState('')
-
-  const handleSaveCalendarId = () => {
-     localStorage.setItem('class_journal_calendar_id', tempCalendarId)
-     setCalendarId(tempCalendarId)
-     setIsEditingCalendar(false)
-  }
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -125,6 +117,7 @@ export default function Dashboard() {
         })
         
         setAttentionStudents(attentionList)
+        setClassesList(classesData)
 
       } catch (error) {
         console.error("Error fetching dashboard data:", error)
@@ -180,36 +173,16 @@ export default function Dashboard() {
         {/* Calendar + Attention List */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
-          {/* Google Calendar */}
+          {/* Custom Integrated Calendar */}
           <div className="bg-white rounded-xl memphis-border shadow-memphis flex flex-col h-[500px]">
-             <div className="p-4 border-b-2 border-dark/10 flex justify-between items-center bg-secondary/10 rounded-t-xl">
+             <div className="p-4 border-b-2 border-dark/10 flex justify-between items-center bg-secondary/10 rounded-t-xl shrink-0">
                <h2 className="font-headline font-bold text-xl text-dark flex items-center gap-2">
                  <span className="material-symbols-outlined text-secondary">calendar_month</span> Lịch Giảng Dạy
                </h2>
-               <button onClick={() => { setTempCalendarId(calendarId); setIsEditingCalendar(!isEditingCalendar) }} className="text-dark/60 hover:text-dark">
-                 <span className="material-symbols-outlined text-[20px]">settings</span>
-               </button>
              </div>
-             {isEditingCalendar ? (
-                <div className="p-6 flex-1 flex flex-col justify-center items-center bg-background/50 rounded-b-xl">
-                   <p className="font-label text-sm text-dark/70 mb-4 text-center">Nhập Google Calendar ID hoặc Email của bạn để đồng bộ lịch dạy. Lịch cần được cài đặt "Công khai" hoặc bạn đang đăng nhập tài khoản đó trên trình duyệt này.</p>
-                   <input type="text" value={tempCalendarId} onChange={e => setTempCalendarId(e.target.value)} placeholder="vd: example@gmail.com" className="w-full max-w-sm p-3 rounded-lg border-2 border-dark mb-4 font-body" />
-                   <div className="flex gap-3">
-                     <button onClick={() => setIsEditingCalendar(false)} className="px-4 py-2 font-bold font-label text-dark/60">Hủy</button>
-                     <button onClick={handleSaveCalendarId} className="bg-primary text-white px-6 py-2 rounded-lg font-bold font-label memphis-border shadow-memphis-sm hover:-translate-y-0.5 transition-all">Lưu ID</button>
-                   </div>
-                </div>
-             ) : calendarId ? (
-                <div className="flex-1 overflow-hidden rounded-b-xl relative">
-                  <iframe src={`https://calendar.google.com/calendar/embed?height=500&wkst=2&bgcolor=%23ffffff&ctz=Asia%2FHo_Chi_Minh&src=${encodeURIComponent(calendarId)}&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=1&showCalendars=0&showTz=0`} style={{borderWidth: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%'}} frameBorder="0" scrolling="no"></iframe>
-                </div>
-             ) : (
-                <div className="p-6 flex-1 flex flex-col justify-center items-center bg-background/50 rounded-b-xl">
-                   <span className="material-symbols-outlined text-6xl text-dark/20 mb-4">event_busy</span>
-                   <p className="font-label text-dark/60 text-center mb-4">Chưa có dữ liệu lịch dạy.</p>
-                   <button onClick={() => { setTempCalendarId(''); setIsEditingCalendar(true) }} className="bg-white px-6 py-2 rounded-lg border-2 border-dark font-bold font-label shadow-[2px_2px_0px_0px_rgba(47,47,47,1)] hover:-translate-y-0.5 transition-all">Thêm Google Calendar</button>
-                </div>
-             )}
+             <div className="flex-1 overflow-hidden">
+               <WeeklyCalendar classes={classesList} />
+             </div>
           </div>
 
           {/* Attention List */}
