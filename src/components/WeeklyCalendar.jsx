@@ -162,8 +162,9 @@ export default function WeeklyCalendar({ classes = [] }) {
                     
                     if (startMins < gridStartMins) return null // Hide events before 7 AM
                     
-                    const top = ((startMins - gridStartMins) / 60) * 4rem // 4rem = h-16
-                    const height = ((endMins - startMins) / 60) * 4rem
+                    const top = ((startMins - gridStartMins) / 60) * 4 // 4rem = h-16
+                    const height = ((endMins - startMins) / 60) * 4
+
                     
                     // Day column index (0 = Mon, 6 = Sun)
                     const colIndex = event.dayIndex === 0 ? 6 : event.dayIndex - 1
