@@ -14,14 +14,18 @@ const initialSkills = [
   { id: 'write',   name: 'Kỹ năng viết',  icon: 'edit',               color: '#FF69B4', score: 7.5, comment: 'Bài viết có bố cục rõ ràng, diễn đạt mạch lạc. Cần chú ý lỗi chính tả và ngữ pháp.' },
 ]
 
-function GradeModal({ isOpen, onClose, studentName, onSave, savedDetails }) {
+function GradeModal({ isOpen, onClose, studentName, onSave, savedDetails, savedTestName, savedTestDate }) {
   const [skills, setSkills] = useState(initialSkills)
+  const [testName, setTestName] = useState('')
+  const [testDate, setTestDate] = useState('')
 
   useEffect(() => {
     if (isOpen) {
       setSkills(savedDetails || initialSkills)
+      setTestName(savedTestName || '')
+      setTestDate(savedTestDate || new Date().toLocaleDateString('en-GB'))
     }
-  }, [isOpen, savedDetails])
+  }, [isOpen, savedDetails, savedTestName, savedTestDate])
 
   const updateScore = (id, newScore) => {
     setSkills(skills.map(s => s.id === id ? { ...s, score: Number(newScore) || 0 } : s))
@@ -61,17 +65,26 @@ function GradeModal({ isOpen, onClose, studentName, onSave, savedDetails }) {
             <div className="flex flex-col gap-1.5">
               <label className="font-label font-bold text-sm text-dark">Tên bài kiểm tra</label>
               <div className="relative">
-                <select className="w-full appearance-none bg-background border-2 border-dark rounded-lg py-2 px-3 font-body text-sm focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer shadow-sm truncate pr-8">
-                  <option>Kiểm tra giữa kỳ 1 – Tiếng Anh</option><option>Kiểm tra 15 phút</option>
-                </select>
-                <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-dark/60">expand_more</span>
+                <input 
+                  type="text" 
+                  value={testName}
+                  onChange={(e) => setTestName(e.target.value)}
+                  placeholder="Nhập tên bài kiểm tra..."
+                  className="w-full bg-background border-2 border-dark rounded-lg py-2 px-3 font-body text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm" 
+                />
               </div>
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="font-label font-bold text-sm text-dark">Ngày kiểm tra</label>
               <div className="relative">
                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-dark/60 text-[18px]">calendar_month</span>
-                <input type="text" defaultValue="15/05/2024" className="w-full bg-background border-2 border-dark rounded-lg py-2 pl-9 pr-3 font-body text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm" />
+                <input 
+                  type="text" 
+                  value={testDate}
+                  onChange={(e) => setTestDate(e.target.value)}
+                  placeholder="DD/MM/YYYY"
+                  className="w-full bg-background border-2 border-dark rounded-lg py-2 pl-9 pr-3 font-body text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm" 
+                />
               </div>
             </div>
           </div>
@@ -124,7 +137,7 @@ function GradeModal({ isOpen, onClose, studentName, onSave, savedDetails }) {
           <button onClick={onClose} className="px-4 py-2 font-label font-bold text-dark/70 hover:text-dark hover:bg-background rounded-lg transition-colors text-sm">
             Hủy
           </button>
-          <button onClick={() => onSave(totalScore, skills)} className="px-5 py-2 font-label font-bold text-white bg-primary border-2 border-dark rounded-lg hover:bg-primary/90 transition-all flex items-center gap-2 shadow-memphis hover:-translate-y-px hover:shadow-memphis-lg active:translate-y-0.5 active:shadow-none text-sm">
+          <button onClick={() => onSave(totalScore, skills, testName, testDate)} className="px-5 py-2 font-label font-bold text-white bg-primary border-2 border-dark rounded-lg hover:bg-primary/90 transition-all flex items-center gap-2 shadow-memphis hover:-translate-y-px hover:shadow-memphis-lg active:translate-y-0.5 active:shadow-none text-sm">
             <span className="material-symbols-outlined text-[18px]">check</span>
             Lưu điểm
           </button>
@@ -698,7 +711,7 @@ export default function JournalSessions() {
   const activeStudentGradeData = activeSession?.grades?.[activeStudent]
   const avgGrade = activeStudentGradeData?.totalScore || '--'
 
-  const handleSaveGrade = async (totalScore, details) => {
+  const handleSaveGrade = async (totalScore, details, testName, testDate) => {
     if (!activeSession) {
       showAlert("Vui lòng chọn một session trước khi nhập điểm!", "warning")
       return
@@ -706,7 +719,7 @@ export default function JournalSessions() {
     try {
       const updatedGrades = {
         ...(activeSession.grades || {}),
-        [activeStudent]: { totalScore, details }
+        [activeStudent]: { totalScore, details, testName, testDate }
       }
       const sessionRef = doc(db, 'journalSessions', activeSession.id)
       await updateDoc(sessionRef, { grades: updatedGrades })
@@ -970,6 +983,8 @@ export default function JournalSessions() {
         studentName={activeStudent}
         onSave={handleSaveGrade}
         savedDetails={activeStudentGradeData?.details}
+        savedTestName={activeStudentGradeData?.testName}
+        savedTestDate={activeStudentGradeData?.testDate}
       />
       <AddSessionModal 
         isOpen={isAddSessionModalOpen} 

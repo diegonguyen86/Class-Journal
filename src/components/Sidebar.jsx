@@ -11,12 +11,8 @@ export default function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 h-screen w-[260px] bg-background border-r-2 border-dark flex flex-col p-6 z-50 overflow-y-auto">
       {/* Logo */}
-      <div className="flex items-center gap-3 mb-10">
-        <span className="material-symbols-outlined fill text-4xl text-primary">auto_stories</span>
-        <div>
-          <h1 className="font-headline text-2xl font-bold text-primary leading-tight">Class Journal</h1>
-          <p className="font-label text-xs text-dark/60 tracking-wide uppercase">Digital Notebook</p>
-        </div>
+      <div className="flex justify-center mb-10">
+        <img src="/logo.png" alt="Ms. Thu Class Journal Logo" className="w-full max-w-[180px] h-auto object-contain drop-shadow-sm" />
       </div>
 
       {/* Quick Note Button Removed */}

@@ -40,27 +40,10 @@ export default function Dashboard() {
            return sessionDate >= currentWeekStart && sessionDate <= currentWeekEnd
         }).length
 
-        let totalAttended = 0
-        let totalExpected = 0
-        sessionsData.forEach(session => {
-          if (session.grades) {
-             Object.values(session.grades).forEach(grade => {
-                if (grade.att !== undefined) {
-                   totalExpected++
-                   if (grade.att === 'M' || grade.att === 'L') {
-                      totalAttended++
-                   }
-                }
-             })
-          }
-        })
-        const avgAttendance = totalExpected > 0 ? Math.round((totalAttended / totalExpected) * 100) : 0
-
         setStats([
           { icon: 'auto_awesome_mosaic', label: 'Tổng số lớp',    value: totalClasses.toString(), color: 'text-primary' },
           { icon: 'library_books',       label: 'Buổi học tuần này',value: lessonsThisWeek.toString(), color: 'text-secondary' },
           { icon: 'groups',              label: 'Tổng học sinh',   value: totalStudents.toString(), color: 'text-accent' },
-          { icon: 'trending_up',         label: 'Tỉ lệ đi học',  value: `${avgAttendance}%`, color: 'text-primary' },
         ])
 
         // Students Needing Attention Logic
@@ -160,7 +143,7 @@ export default function Dashboard() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {stats.map((s) => (
             <div key={s.label} className="bg-white p-6 rounded-xl memphis-border shadow-memphis flex flex-col">
               <span className={`material-symbols-outlined fill mb-2 ${s.color}`}>{s.icon}</span>
