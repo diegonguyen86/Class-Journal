@@ -26,23 +26,16 @@ export default function Dashboard() {
         const totalClasses = classesData.length
         const totalStudents = classesData.reduce((sum, cls) => sum + (cls.studentList?.length || 0), 0)
 
-        const today = new Date()
-        const currentWeekStart = new Date(today)
-        currentWeekStart.setDate(today.getDate() - today.getDay() + (today.getDay() === 0 ? -6 : 1)) // Monday
-        currentWeekStart.setHours(0, 0, 0, 0)
-        
-        const currentWeekEnd = new Date(currentWeekStart)
-        currentWeekEnd.setDate(currentWeekStart.getDate() + 6)
-        currentWeekEnd.setHours(23, 59, 59, 999)
-
-        const lessonsThisWeek = sessionsData.filter(s => {
-           const sessionDate = new Date(s.date)
-           return sessionDate >= currentWeekStart && sessionDate <= currentWeekEnd
-        }).length
+        let scheduledLessonsThisWeek = 0;
+        classesData.forEach(cls => {
+           if (cls.days) {
+              scheduledLessonsThisWeek += cls.days.split('/').filter(d => d.trim() !== '').length;
+           }
+        });
 
         setStats([
           { icon: 'auto_awesome_mosaic', label: 'Tổng số lớp',    value: totalClasses.toString(), color: 'text-primary' },
-          { icon: 'library_books',       label: 'Buổi học tuần này',value: lessonsThisWeek.toString(), color: 'text-secondary' },
+          { icon: 'library_books',       label: 'Buổi học tuần này',value: scheduledLessonsThisWeek.toString(), color: 'text-secondary' },
           { icon: 'groups',              label: 'Tổng học sinh',   value: totalStudents.toString(), color: 'text-accent' },
         ])
 
@@ -123,7 +116,7 @@ export default function Dashboard() {
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 bg-white/40 p-8 rounded-xl memphis-border shadow-memphis">
           <div>
             <h1 className="font-headline text-4xl font-extrabold text-dark mb-2">
-              Welcome back, Ms. Sarah! 👋
+              Welcome back, Ms. Thư! 👋
             </h1>
             <p className="font-label text-lg text-dark/70">
               {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} — 3 upcoming classes today
@@ -157,7 +150,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
           {/* Custom Integrated Calendar */}
-          <div className="bg-white rounded-xl memphis-border shadow-memphis flex flex-col h-[500px]">
+          <div className="bg-white rounded-xl memphis-border shadow-memphis flex flex-col h-[400px]">
              <div className="p-4 border-b-2 border-dark/10 flex justify-between items-center bg-secondary/10 rounded-t-xl shrink-0">
                <h2 className="font-headline font-bold text-xl text-dark flex items-center gap-2">
                  <span className="material-symbols-outlined text-secondary">calendar_month</span> Lịch Giảng Dạy
@@ -169,7 +162,7 @@ export default function Dashboard() {
           </div>
 
           {/* Attention List */}
-          <div className="bg-white rounded-xl memphis-border shadow-memphis flex flex-col h-[500px]">
+          <div className="bg-white rounded-xl memphis-border shadow-memphis flex flex-col h-[400px]">
              <div className="p-4 border-b-2 border-dark/10 flex justify-between items-center bg-danger/10 rounded-t-xl">
                <h2 className="font-headline font-bold text-xl text-dark flex items-center gap-2">
                  <span className="material-symbols-outlined text-danger">warning</span> Học sinh cần lưu ý

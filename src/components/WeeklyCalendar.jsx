@@ -13,6 +13,7 @@ const DAYS_MAP = {
 const HOURS = Array.from({ length: 15 }, (_, i) => i + 7) // 7 AM to 9 PM
 
 export default function WeeklyCalendar({ classes = [] }) {
+  const [selectedEvent, setSelectedEvent] = useState(null)
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
     const today = new Date()
     const day = today.getDay()
@@ -121,7 +122,7 @@ export default function WeeklyCalendar({ classes = [] }) {
            <div className="w-16 flex-shrink-0 border-r-2 border-dark/10 bg-background/20">
               <div className="h-12 border-b-2 border-dark/10"></div> {/* Empty corner */}
               {HOURS.map(hour => (
-                 <div key={hour} className="h-16 border-b border-dark/5 relative">
+                 <div key={hour} className="h-12 border-b border-dark/5 relative">
                     <span className="absolute -top-2.5 right-2 text-xs font-label text-dark/40">{hour}:00</span>
                  </div>
               ))}
@@ -149,7 +150,7 @@ export default function WeeklyCalendar({ classes = [] }) {
                  {weekDays.map((_, i) => (
                     <div key={i} className="border-r border-dark/10 relative">
                        {HOURS.map(hour => (
-                          <div key={hour} className="h-16 border-b border-dark/5"></div>
+                          <div key={hour} className="h-12 border-b border-dark/5"></div>
                        ))}
                     </div>
                  ))}
@@ -162,8 +163,8 @@ export default function WeeklyCalendar({ classes = [] }) {
                     
                     if (startMins < gridStartMins) return null // Hide events before 7 AM
                     
-                    const top = ((startMins - gridStartMins) / 60) * 4 // 4rem = h-16
-                    const height = ((endMins - startMins) / 60) * 4
+                    const top = ((startMins - gridStartMins) / 60) * 3 // 3rem = h-12
+                    const height = ((endMins - startMins) / 60) * 3
 
                     
                     // Day column index (0 = Mon, 6 = Sun)
@@ -174,8 +175,9 @@ export default function WeeklyCalendar({ classes = [] }) {
                     return (
                        <div 
                           key={event.id}
-                          className="absolute p-1 z-20 group"
+                          className="absolute p-1 z-20 group cursor-pointer"
                           style={{ top: `${top}rem`, height: `${height}rem`, left, width }}
+                          onClick={() => setSelectedEvent(event)}
                        >
                           <div 
                              className="w-full h-full rounded-md border-2 border-dark/20 p-1.5 flex flex-col overflow-hidden transition-all hover:z-30 hover:shadow-memphis-sm hover:-translate-y-px hover:border-dark"
@@ -198,6 +200,50 @@ export default function WeeklyCalendar({ classes = [] }) {
            </div>
         </div>
       </div>
+      
+      {/* Event Details Modal */}
+      {selectedEvent && (
+         <div className="absolute inset-0 z-50 bg-dark/20 backdrop-blur-sm flex items-center justify-center p-4 rounded-b-xl" onClick={() => setSelectedEvent(null)}>
+            <div 
+               className="bg-white p-6 rounded-xl memphis-border shadow-memphis max-w-sm w-full relative" 
+               onClick={e => e.stopPropagation()}
+            >
+               <button 
+                  onClick={() => setSelectedEvent(null)}
+                  className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center hover:bg-danger/10 text-dark/70 hover:text-danger transition-colors"
+               >
+                  <span className="material-symbols-outlined text-sm">close</span>
+               </button>
+               
+               <div className="flex items-center gap-3 mb-4 pr-6">
+                  <div 
+                     className="w-10 h-10 rounded-lg flex items-center justify-center border-2 border-dark/20"
+                     style={{ backgroundColor: selectedEvent.color + '33', color: selectedEvent.color }}
+                  >
+                     <span className="material-symbols-outlined">{selectedEvent.icon}</span>
+                  </div>
+                  <div>
+                     <h3 className="font-headline font-bold text-xl text-dark leading-tight">{selectedEvent.title}</h3>
+                  </div>
+               </div>
+               
+               <div className="space-y-3 font-label text-dark/80">
+                  <div className="flex items-center gap-2">
+                     <span className="material-symbols-outlined text-sm text-dark/50">schedule</span>
+                     <span>{selectedEvent.startTime} - {selectedEvent.endTime}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                     <span className="material-symbols-outlined text-sm text-dark/50">meeting_room</span>
+                     <span>Phòng: {selectedEvent.room}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                     <span className="material-symbols-outlined text-sm text-dark/50">calendar_today</span>
+                     <span>Thứ: {['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][selectedEvent.dayIndex]}</span>
+                  </div>
+               </div>
+            </div>
+         </div>
+      )}
     </div>
   )
 }
