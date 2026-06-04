@@ -7,10 +7,12 @@ const db = getFirestore()
 const parseImageLink = (url) => {
   if (!url) return '/placeholder.png' // Fallback
   try {
-    const driveRegex = /\/file\/d\/([a-zA-Z0-9_-]+)\//
+    // Matches both /file/d/ID/view and ?id=ID formats
+    const driveRegex = /(?:file\/d\/|id=)([a-zA-Z0-9_-]+)/
     const match = url.match(driveRegex)
     if (match && match[1]) {
-      return `https://drive.google.com/uc?export=view&id=${match[1]}`
+      // Use the newest lh3 Google User Content endpoint which is most robust for hotlinking
+      return `https://lh3.googleusercontent.com/d/${match[1]}=w1200`
     }
     return url
   } catch (e) {
