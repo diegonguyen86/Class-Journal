@@ -256,7 +256,7 @@ export default function ProfileSettings() {
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block font-label font-bold text-dark mb-1">Mô Tả Ngắn Về Bản Thân</label>
+                <label className="block font-label font-bold text-dark mb-1">Giới Thiệu Chung (Mô tả kinh nghiệm, phương pháp giảng dạy...)</label>
                 <textarea 
                   className="w-full border-2 border-dark/20 p-2 rounded-md font-body focus:border-primary outline-none h-24"
                   value={profile.about}
