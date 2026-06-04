@@ -45,6 +45,11 @@ export default function Portfolio() {
     )
   }
 
+  const validCertificates = profile.certificates?.filter(cert => (cert.name && cert.name.trim() !== '') || (cert.issuer && cert.issuer.trim() !== '') || cert.imageLink) || []
+  const validStudents = profile.outstandingStudents?.filter(student => (student.name && student.name.trim() !== '') || (student.achievement && student.achievement.trim() !== '') || student.imageLink) || []
+  const validSocials = profile.socials?.filter(social => social.url && social.url.trim() !== '') || []
+  const validAbout = profile.about?.trim()
+
   return (
     <div className="min-h-screen bg-[#F8F4EC] text-dark font-body relative overflow-hidden selection:bg-primary selection:text-white pb-32">
       {/* Background Pattern - Dot Grid */}
@@ -77,10 +82,10 @@ export default function Portfolio() {
           </div>
 
           {/* Social Links */}
-          <div className="flex flex-wrap justify-center gap-6 mt-8">
-            {Array.isArray(profile.socials) && profile.socials.map(social => {
-              if (!social.url) return null;
-              let bgColor = 'bg-dark'
+          {validSocials.length > 0 && (
+            <div className="flex flex-wrap justify-center gap-6 mt-8">
+              {validSocials.map(social => {
+                let bgColor = 'bg-dark'
               let svgIcon = null
               
               if (social.platform === 'Facebook') { 
@@ -119,11 +124,12 @@ export default function Portfolio() {
                 </a>
               )
             })}
-          </div>
+            </div>
+          )}
         </header>
 
         {/* About Section */}
-        {profile.about && (
+        {validAbout && (
           <section className="relative w-full max-w-4xl mx-auto">
             <div className="hidden md:block absolute inset-0 bg-primary rounded-3xl rotate-2 memphis-border-thick"></div>
             <div className="relative bg-white p-6 md:p-14 rounded-[2rem] md:rounded-3xl memphis-border-thick md:-rotate-1 md:hover:rotate-0 transition-transform duration-300">
@@ -139,7 +145,7 @@ export default function Portfolio() {
         )}
 
         {/* Certificates Grid */}
-        {profile.certificates && profile.certificates.length > 0 && (
+        {validCertificates.length > 0 && (
           <section>
             <div className="inline-block bg-dark text-white px-6 md:px-8 py-3 md:py-4 rounded-xl memphis-border mb-8 md:mb-12 md:-rotate-1 shadow-[6px_6px_0px_0px_#A5D6A7] md:shadow-[8px_8px_0px_0px_#A5D6A7]">
               <h2 className="text-2xl md:text-4xl font-headline font-black uppercase tracking-wider flex items-center gap-3 md:gap-4">
@@ -149,7 +155,7 @@ export default function Portfolio() {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {profile.certificates.map(cert => (
+              {validCertificates.map(cert => (
                 <div key={cert.id} className="bg-white rounded-[2rem] memphis-border-thick shadow-[10px_10px_0px_0px_rgba(26,26,26,1)] overflow-hidden flex flex-col group hover:-translate-y-3 transition-transform duration-300">
                   {cert.imageLink && (
                     <div className="h-56 w-full bg-dark/5 overflow-hidden border-b-4 border-dark relative">
@@ -176,7 +182,7 @@ export default function Portfolio() {
         )}
 
         {/* Outstanding Students Grid */}
-        {profile.outstandingStudents && profile.outstandingStudents.length > 0 && (
+        {validStudents.length > 0 && (
           <section className="pt-8 md:pt-10">
             <div className="flex justify-start md:justify-end mb-8 md:mb-12">
               <div className="inline-block bg-primary text-white px-6 md:px-8 py-3 md:py-4 rounded-xl memphis-border md:rotate-1 shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] md:shadow-[8px_8px_0px_0px_rgba(26,26,26,1)]">
@@ -188,7 +194,7 @@ export default function Portfolio() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-              {profile.outstandingStudents.map(student => (
+              {validStudents.map(student => (
                 <div key={student.id} className="bg-white rounded-3xl memphis-border-thick shadow-[12px_12px_0px_0px_rgba(26,26,26,1)] relative overflow-hidden group hover:-translate-y-2 transition-transform duration-300">
                   {/* Geometric Decoration */}
                   <div className="absolute -left-6 -top-6 w-32 h-32 bg-secondary rounded-full memphis-border group-hover:scale-110 transition-transform"></div>
