@@ -794,7 +794,7 @@ export default function JournalSessions() {
   return (
     <div className="flex flex-col min-h-screen">
       <TopNavBar />
-      <main className="flex-1 p-8 flex flex-col gap-6 relative">
+      <main className="flex-1 p-4 md:p-8 flex flex-col gap-6 relative">
         {/* Hero Section */}
         <div className="relative z-10">
           <h1 className="font-headline font-extrabold text-4xl mb-2 text-dark tracking-tight">Capture every teaching moment.</h1>
@@ -802,9 +802,9 @@ export default function JournalSessions() {
         </div>
 
         {/* Two Column Layout */}
-        <div className="flex flex-1 gap-6 min-h-0 relative z-10">
+        <div className="flex flex-col md:flex-row flex-1 gap-4 md:gap-6 min-h-0 relative z-10">
           {/* Left Column: Lesson List */}
-          <div className="w-[35%] min-w-0 flex flex-col bg-white/60 backdrop-blur-sm rounded-2xl memphis-border p-4 flex-shrink-0 h-[calc(100vh-220px)]">
+          <div className="w-full md:w-[35%] min-w-0 flex flex-col bg-white/60 backdrop-blur-sm rounded-2xl memphis-border p-4 flex-shrink-0 h-[300px] md:h-[calc(100vh-220px)]">
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center gap-2">
                 <h2 className="font-headline font-bold text-xl">Sessions</h2>
@@ -848,7 +848,7 @@ export default function JournalSessions() {
           </div>
 
           {/* Right Column: Note Editor */}
-          <div className="w-[65%] min-w-0 bg-white rounded-2xl memphis-border flex flex-col h-[calc(100vh-220px)] overflow-y-auto shadow-sm">
+          <div className="w-full md:w-[65%] min-w-0 bg-white rounded-2xl memphis-border flex flex-col h-[500px] md:h-[calc(100vh-220px)] overflow-y-auto shadow-sm">
             {/* Top Toolbar */}
             <div className="bg-[#F8F4EC] border-b-2 border-dark p-4 flex flex-col gap-4 shrink-0">
               {/* Class Selector Dropdown */}
@@ -901,7 +901,7 @@ export default function JournalSessions() {
               <div className="border-t-2 border-dark/10 pt-4">
                 <h3 className="font-headline font-bold text-lg mb-3 text-dark">Nhận xét riêng cho học sinh: <span className="text-primary">{activeStudent}</span></h3>
                 
-                <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                   <div className="bg-background p-3 rounded-xl memphis-border flex flex-col items-center justify-center">
                     <div className="font-label text-[10px] font-bold text-primary mb-1 text-center uppercase tracking-wider">Tỉ lệ điểm danh</div>
                     <div className="font-headline font-extrabold text-2xl text-dark mb-1">{studentStats.att}%</div>
@@ -932,7 +932,7 @@ export default function JournalSessions() {
 
                 <div className="relative">
                   <textarea value={personalNote} onChange={e => setPersonalNote(e.target.value)} className="w-full h-24 p-3 bg-white border-2 border-dark rounded-xl font-body text-sm focus:ring-0 focus:border-primary resize-none break-words" placeholder={`Nhập nhận xét cá nhân cho ${activeStudent}...`}></textarea>
-                  <div className="flex items-center gap-3 mt-3">
+                  <div className="flex flex-col sm:flex-row items-center gap-3 mt-3">
                     <button 
                       onClick={() => setIsGradeModalOpen(true)}
                       className="flex-1 bg-white text-dark px-4 py-2 rounded-lg font-label font-bold text-sm border-2 border-dark hover:shadow-memphis-sm active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2">

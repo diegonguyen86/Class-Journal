@@ -393,14 +393,14 @@ export default function MyClasses() {
   return (
     <div className="flex flex-col min-h-screen">
       <TopNavBar />
-      <main className="flex-1 p-8">
+      <main className="flex-1 p-4 md:p-8">
         {/* Header */}
-        <div className="flex justify-between items-end mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-6 md:mb-8">
           <div>
-            <h1 className="font-headline text-4xl font-extrabold text-dark mb-1">My Classes</h1>
-            <p className="font-label text-lg text-dark/70">Manage your classrooms and student rosters</p>
+            <h1 className="font-headline text-3xl md:text-4xl font-extrabold text-dark mb-1">My Classes</h1>
+            <p className="font-label text-base md:text-lg text-dark/70">Manage your classrooms and student rosters</p>
           </div>
-          <button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-2 bg-accent text-white px-6 py-2.5 rounded-lg memphis-border shadow-memphis font-label font-bold hover:-translate-y-0.5 transition-transform">
+          <button onClick={() => setIsAddModalOpen(true)} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-accent text-white px-6 py-2.5 rounded-lg memphis-border shadow-memphis font-label font-bold hover:-translate-y-0.5 transition-transform">
             <span className="material-symbols-outlined">add</span> Add Class
           </button>
         </div>

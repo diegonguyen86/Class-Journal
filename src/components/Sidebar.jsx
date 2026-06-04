@@ -10,7 +10,7 @@ const navItems = [
   { to: '/profile',     icon: 'person',       label: 'Hồ Sơ Giáo Viên' },
 ]
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, setIsOpen }) {
   const handleLogout = async () => {
     try {
       await signOut(auth)
@@ -20,10 +20,20 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-[260px] bg-background border-r-2 border-dark flex flex-col p-6 z-50 overflow-y-auto">
-      {/* Logo */}
-      <div className="flex justify-center mb-10">
-        <img src="/logo.png" alt="Ms. Thu Class Journal Logo" className="w-full max-w-[180px] h-auto object-contain drop-shadow-sm" />
+    <aside className={`
+      fixed left-0 top-0 h-screen w-[260px] bg-background border-r-2 border-dark flex flex-col p-6 z-50 overflow-y-auto
+      transition-transform duration-300 ease-in-out
+      ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+    `}>
+      {/* Mobile Close Button & Logo */}
+      <div className="flex justify-between items-center mb-10 md:justify-center relative">
+        <img src="/logo.png" alt="Ms. Thu Class Journal Logo" className="w-3/4 md:w-full max-w-[180px] h-auto object-contain drop-shadow-sm mx-auto" />
+        <button 
+          onClick={() => setIsOpen(false)}
+          className="md:hidden absolute -right-2 top-0 p-1 bg-white rounded-full memphis-border shadow-sm text-dark flex items-center justify-center"
+        >
+          <span className="material-symbols-outlined">close</span>
+        </button>
       </div>
 
       {/* Quick Note Button Removed */}
@@ -40,6 +50,7 @@ export default function Sidebar() {
                 ? 'bg-secondary memphis-border shadow-memphis-sm text-dark translate-x-0.5 translate-y-0.5'
                 : 'text-dark/80 hover:bg-secondary/40 hover:translate-x-1')
             }
+            onClick={() => setIsOpen && setIsOpen(false)}
           >
             <span className="material-symbols-outlined">{icon}</span>
             {label}

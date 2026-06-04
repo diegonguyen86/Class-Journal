@@ -314,11 +314,11 @@ export default function StudentBilling() {
   return (
     <div className="flex flex-col min-h-screen">
       <TopNavBar />
-      <main className="flex-1 p-8 lg:p-12 overflow-y-auto">
-        <div className="max-w-6xl mx-auto space-y-12">
+      <main className="flex-1 p-4 md:p-8 lg:p-12 overflow-y-auto">
+        <div className="max-w-6xl mx-auto space-y-8 md:space-y-12">
           {/* Page Header */}
           <div>
-            <h2 className="text-4xl font-headline font-bold mb-2">Student Tuition & Payments</h2>
+            <h2 className="text-3xl md:text-4xl font-headline font-bold mb-1 md:mb-2">Student Tuition & Payments</h2>
             <p className="text-dark/70 font-label text-lg">Manage school-wide billing and student accounts</p>
           </div>
 

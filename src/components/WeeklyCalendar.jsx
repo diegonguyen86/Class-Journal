@@ -116,8 +116,8 @@ export default function WeeklyCalendar({ classes = [] }) {
       </div>
       
       {/* Calendar Grid */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar relative">
-        <div className="flex min-w-full">
+      <div className="flex-1 overflow-y-auto overflow-x-auto custom-scrollbar relative">
+        <div className="flex min-w-[700px] lg:min-w-full">
            {/* Time Column */}
            <div className="w-16 flex-shrink-0 border-r-2 border-dark/10 bg-background/20">
               <div className="h-12 border-b-2 border-dark/10"></div> {/* Empty corner */}

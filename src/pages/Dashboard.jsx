@@ -117,7 +117,7 @@ export default function Dashboard() {
   return (
     <div className="flex flex-col min-h-screen">
       <TopNavBar />
-      <main className="flex-1 p-8 space-y-8">
+      <main className="flex-1 p-4 md:p-8 space-y-6 md:space-y-8">
 
         {/* Hero */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 bg-white/40 p-8 rounded-xl memphis-border shadow-memphis">
@@ -158,7 +158,7 @@ export default function Dashboard() {
           
           {/* Custom Integrated Calendar */}
           <div className="bg-white rounded-xl memphis-border shadow-memphis flex flex-col h-[400px]">
-             <div className="p-4 border-b-2 border-dark/10 flex justify-between items-center bg-secondary/10 rounded-t-xl shrink-0">
+             <div className="p-3 md:p-4 border-b-2 border-dark/10 flex justify-between items-center bg-secondary/10 rounded-t-xl shrink-0">
                <h2 className="font-headline font-bold text-xl text-dark flex items-center gap-2">
                  <span className="material-symbols-outlined text-secondary">calendar_month</span> Lịch Giảng Dạy
                </h2>
@@ -170,7 +170,7 @@ export default function Dashboard() {
 
           {/* Attention List */}
           <div className="bg-white rounded-xl memphis-border shadow-memphis flex flex-col h-[400px]">
-             <div className="p-4 border-b-2 border-dark/10 flex justify-between items-center bg-danger/10 rounded-t-xl">
+             <div className="p-3 md:p-4 border-b-2 border-dark/10 flex justify-between items-center bg-danger/10 rounded-t-xl">
                <h2 className="font-headline font-bold text-xl text-dark flex items-center gap-2">
                  <span className="material-symbols-outlined text-danger">warning</span> Học sinh cần lưu ý
                </h2>
