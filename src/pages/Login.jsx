@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { auth } from '../firebase'
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth'
+import { signInWithEmailAndPassword } from 'firebase/auth'
 
 export default function Login() {
-  const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -15,11 +14,7 @@ export default function Login() {
     setLoading(true)
     
     try {
-      if (isLogin) {
-        await signInWithEmailAndPassword(auth, email, password)
-      } else {
-        await createUserWithEmailAndPassword(auth, email, password)
-      }
+      await signInWithEmailAndPassword(auth, email, password)
     } catch (err) {
       setError(err.message || 'Đã có lỗi xảy ra.')
     } finally {
@@ -38,21 +33,7 @@ export default function Login() {
           <p className="font-label text-dark/60 mt-2">Đăng nhập để quản lý học sinh của bạn</p>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-2 mb-6">
-          <button 
-            className={`flex-1 py-2 font-bold font-label rounded-md transition-all ${isLogin ? 'bg-secondary text-dark border-2 border-dark' : 'bg-transparent text-dark/60 border-2 border-transparent hover:bg-dark/5'}`}
-            onClick={() => setIsLogin(true)}
-          >
-            Đăng nhập
-          </button>
-          <button 
-            className={`flex-1 py-2 font-bold font-label rounded-md transition-all ${!isLogin ? 'bg-secondary text-dark border-2 border-dark' : 'bg-transparent text-dark/60 border-2 border-transparent hover:bg-dark/5'}`}
-            onClick={() => setIsLogin(false)}
-          >
-            Đăng ký
-          </button>
-        </div>
+
 
         {error && (
           <div className="bg-danger/10 border-2 border-danger text-danger p-3 rounded-md mb-6 font-label text-sm font-bold flex items-center gap-2">
@@ -91,7 +72,7 @@ export default function Login() {
             className="w-full bg-primary text-white font-bold py-3 px-4 rounded-md memphis-border shadow-memphis-sm hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all font-label mt-4 disabled:opacity-50 flex justify-center items-center gap-2"
           >
             {loading && <span className="material-symbols-outlined animate-spin">refresh</span>}
-            {isLogin ? 'Vào hệ thống' : 'Tạo tài khoản mới'}
+            Vào hệ thống
           </button>
         </form>
       </div>
