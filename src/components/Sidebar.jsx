@@ -7,6 +7,7 @@ const navItems = [
   { to: '/classes',     icon: 'groups',       label: 'My Classes' },
   { to: '/sessions',    icon: 'description',  label: 'Session Notes' },
   { to: '/billing',     icon: 'payments',     label: 'Student Billing' },
+  { to: '/profile',     icon: 'person',       label: 'Hồ Sơ Giáo Viên' },
 ]
 
 export default function Sidebar() {
