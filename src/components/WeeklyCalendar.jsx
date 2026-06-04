@@ -183,13 +183,13 @@ export default function WeeklyCalendar({ classes = [] }) {
                              className="w-full h-full rounded-md border-2 border-dark/20 p-1.5 flex flex-col overflow-hidden transition-all hover:z-30 hover:shadow-memphis-sm hover:-translate-y-px hover:border-dark"
                              style={{ backgroundColor: event.color + '33', borderLeftColor: event.color, borderLeftWidth: '4px' }}
                           >
-                             <div className="font-headline font-bold text-xs text-dark leading-tight truncate">
+                             <div className="font-headline font-bold text-xs text-dark leading-tight truncate shrink-0">
                                 {event.title}
                              </div>
-                             <div className="font-label text-[10px] text-dark/70 mt-0.5 truncate">
+                             <div className="font-label text-[10px] text-dark/70 mt-0.5 truncate shrink-0">
                                 {event.startTime} - {event.endTime}
                              </div>
-                             <div className="font-label text-[10px] text-dark/70 truncate flex items-center gap-0.5 mt-auto">
+                             <div className="font-label text-[10px] text-dark/70 truncate flex items-center gap-0.5 mt-auto shrink-0">
                                 <span className="material-symbols-outlined text-[10px]">meeting_room</span> {event.room}
                              </div>
                           </div>

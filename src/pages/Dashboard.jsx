@@ -9,6 +9,7 @@ export default function Dashboard() {
   const [stats, setStats] = useState([])
   const [attentionStudents, setAttentionStudents] = useState([])
   const [classesList, setClassesList] = useState([])
+  const [classesToday, setClassesToday] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -95,6 +96,12 @@ export default function Dashboard() {
         setAttentionStudents(attentionList)
         setClassesList(classesData)
 
+        const todayIndex = new Date().getDay()
+        const reverseDaysMap = { 0: 'CN', 1: 'T2', 2: 'T3', 3: 'T4', 4: 'T5', 5: 'T6', 6: 'T7' }
+        const todayStr = reverseDaysMap[todayIndex]
+        const classesTodayCount = classesData.filter(cls => cls.days && cls.days.includes(todayStr)).length
+        setClassesToday(classesTodayCount)
+
       } catch (error) {
         console.error("Error fetching dashboard data:", error)
       } finally {
@@ -119,7 +126,7 @@ export default function Dashboard() {
               Welcome back, Ms. Thư! 👋
             </h1>
             <p className="font-label text-lg text-dark/70">
-              {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} — 3 upcoming classes today
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} — {classesToday} upcoming classes today
             </p>
           </div>
           <div className="flex flex-wrap gap-3">

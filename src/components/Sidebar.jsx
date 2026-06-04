@@ -1,4 +1,6 @@
 import { NavLink } from 'react-router-dom'
+import { auth } from '../firebase'
+import { signOut } from 'firebase/auth'
 
 const navItems = [
   { to: '/dashboard',   icon: 'dashboard',    label: 'Dashboard' },
@@ -8,6 +10,14 @@ const navItems = [
 ]
 
 export default function Sidebar() {
+  const handleLogout = async () => {
+    try {
+      await signOut(auth)
+    } catch (error) {
+      console.error("Lỗi đăng xuất:", error)
+    }
+  }
+
   return (
     <aside className="fixed left-0 top-0 h-screen w-[260px] bg-background border-r-2 border-dark flex flex-col p-6 z-50 overflow-y-auto">
       {/* Logo */}
@@ -36,7 +46,16 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Footer Removed */}
+      {/* Logout Button */}
+      <div className="mt-8">
+        <button 
+          onClick={handleLogout}
+          className="w-full flex items-center justify-center gap-2 p-3 rounded-lg font-label font-bold text-sm transition-all duration-200 text-danger hover:bg-danger/10 hover:translate-x-1"
+        >
+          <span className="material-symbols-outlined">logout</span>
+          Đăng xuất
+        </button>
+      </div>
     </aside>
   )
 }
