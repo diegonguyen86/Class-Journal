@@ -10,6 +10,7 @@ import StudentBilling from './pages/StudentBilling'
 import Login from './pages/Login'
 import ProfileSettings from './pages/ProfileSettings'
 import Portfolio from './pages/Portfolio'
+import GradeManagement from './pages/GradeManagement'
 
 function PrivateRoute({ children, user }) {
   if (!user) {
@@ -46,6 +47,7 @@ function PrivateLayout({ user }) {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/classes" element={<MyClasses />} />
             <Route path="/sessions" element={<JournalSessions />} />
+            <Route path="/grades" element={<GradeManagement />} />
             <Route path="/billing" element={<StudentBilling />} />
             <Route path="/profile" element={<ProfileSettings />} />
           </Routes>

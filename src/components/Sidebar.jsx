@@ -6,6 +6,7 @@ const navItems = [
   { to: '/dashboard',   icon: 'dashboard',    label: 'Dashboard' },
   { to: '/classes',     icon: 'groups',       label: 'My Classes' },
   { to: '/sessions',    icon: 'description',  label: 'Session Notes' },
+  { to: '/grades',      icon: 'fact_check',   label: 'Bảng Điểm & Đánh Giá' },
   { to: '/billing',     icon: 'payments',     label: 'Student Billing' },
   { to: '/profile',     icon: 'person',       label: 'Hồ Sơ Giáo Viên' },
 ]

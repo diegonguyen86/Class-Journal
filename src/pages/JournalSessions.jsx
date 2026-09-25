@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import TopNavBar from '../components/TopNavBar'
@@ -933,11 +934,12 @@ export default function JournalSessions() {
                 <div className="relative">
                   <textarea value={personalNote} onChange={e => setPersonalNote(e.target.value)} className="w-full h-24 p-3 bg-white border-2 border-dark rounded-xl font-body text-sm focus:ring-0 focus:border-primary resize-none break-words" placeholder={`Nhập nhận xét cá nhân cho ${activeStudent}...`}></textarea>
                   <div className="flex flex-col sm:flex-row items-center gap-3 mt-3">
-                    <button 
-                      onClick={() => setIsGradeModalOpen(true)}
-                      className="flex-1 bg-white text-dark px-4 py-2 rounded-lg font-label font-bold text-sm border-2 border-dark hover:shadow-memphis-sm active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2">
-                      <span className="material-symbols-outlined text-sm">edit_note</span> Nhập điểm
-                    </button>
+                    <Link 
+                      to="/grades"
+                      className="flex-1 bg-white text-dark px-4 py-2 rounded-lg font-label font-bold text-sm border-2 border-dark hover:shadow-memphis-sm active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-sm">fact_check</span> Quản lý bảng điểm
+                    </Link>
                     <button onClick={handleSavePersonalNote} className="flex-1 bg-primary text-white px-4 py-2 rounded-lg font-label font-bold text-sm memphis-border hover:shadow-memphis-sm active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2">
                       <span className="material-symbols-outlined text-sm">save</span> Lưu nhận xét riêng
                     </button>
